@@ -5,6 +5,16 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <ToolCommandName>ask</ToolCommandName>
+    <PackageId>jaidencoleflannery.chat.net</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Jaiden Cole Flannery</Authors>
+    <Description>A C# CLI tool for communicating with AI without the overhead of indexing and file parsing.</Description>
+    <RepositoryUrl>https://github.com/jaidencoleflannery/chat.net</RepositoryUrl> 
+    <PackageTags>AI;CLI;Chat;Tool</PackageTags>
   </PropertyGroup>
 
 </Project>
