@@ -23,7 +23,7 @@ public static class CommandService {
                 ConfigurationService.SetModel(command);
                 break;
             case ConfigAction.ClearConfig:
-                ConfigurationService.ClearConfig(command);
+                ConfigurationService.ClearConfig();
                 break;
         }
     }
