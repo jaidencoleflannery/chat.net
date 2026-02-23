@@ -1,3 +1,4 @@
+using chat.net.Conversations;
 using chat.net.Configurations;
 
 namespace chat.net.Commands;
@@ -17,7 +18,6 @@ public static class CommandService {
     }
 
     public static void ExecuteConfigCommand(Config command) {
-        Console.WriteLine("Config Command Ran");
         switch(command.Action) {
             case ConfigAction.SetModel:
                 ConfigurationService.SetModel(command);
@@ -29,6 +29,6 @@ public static class CommandService {
     }
 
     public static void ExecuteInputCommand(Input command) {
-        Console.WriteLine("Input Command Ran");
+        ConversationService.Call(command.Text);
     }
 }

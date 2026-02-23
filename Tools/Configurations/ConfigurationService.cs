@@ -4,7 +4,7 @@ using chat.net.Commands;
 namespace chat.net.Configurations;
 
 public static class ConfigurationService {
- 
+
     public static void SetModel(Config command) { 
         if (command == null || string.IsNullOrWhiteSpace(command.Value))
             return;
