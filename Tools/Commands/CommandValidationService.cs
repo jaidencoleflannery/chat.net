@@ -18,11 +18,11 @@ public static class CommandValidationService {
         switch (commandAction) {
             // if it is a command, return the command
             case CommandAction.Config:
-                if(commands.Length < 3) {
-                    Console.WriteLine("Argument and value expected for --config.");
+                if(commands.Length < 2) {
+                    Console.WriteLine("Argument expected for --config.");
                     return null;
                 }
-                command = ParseConfigCommand(commands[1], commands[2]);
+                command = ParseConfigCommand(commands);
                 break; 
             // if it is just text, return the text
             case CommandAction.Input:
@@ -45,13 +45,18 @@ public static class CommandValidationService {
             : CommandActions.CommandAction.Input;    
     }
 
-    private static Command? ParseConfigCommand(string command, string value) {
-        var input = FormatCommand(command); 
+    private static Command? ParseConfigCommand(string[] commands) {
+        var input = FormatCommand(commands[1]); 
 
         // see if the enum contains our input, if so, return the command type
-        return Enum.TryParse<ConfigAction>(input, true, out var action)
-            ? new Config(action, value)
-            : null;
+        Console.WriteLine($"!!{input}");
+        if(Enum.TryParse<ConfigAction>(input, true, out var action))
+            return new Config(action, (commands.Length > 2) ? commands[2] : "");
+        else {
+            Console.WriteLine(action);
+            Console.WriteLine($"Argument {commands[1]} for --config could not be found");
+            return null;
+        }
     }
 
     // convert string into generic format
