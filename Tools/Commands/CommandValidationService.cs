@@ -9,12 +9,6 @@ public static class CommandValidationService {
         if(commands.Length <= 0)
             return null;
 
-        int index = 0;
-        foreach(var com in commands) {
-            Console.WriteLine($"{index}: {com}");
-            index++;
-        }
-
         // this will be Input (normal chat) if the command is not found
         CommandAction? commandAction = GetCommandType(commands[0]);
         Command? command = null;
@@ -29,13 +23,11 @@ public static class CommandValidationService {
                     return null;
                 }
                 command = ParseConfigCommand(commands[1], commands[2]);
-                Console.WriteLine($"Command Found: {command}");
                 break; 
             // if it is just text, return the text
             case CommandAction.Input:
                 // process the input
                 command = new Input(commands[0]);
-                Console.WriteLine($"Command Found: {command}");
                 break;
             case null:
                 throw new Exception("Unexpected error in command validation.");
@@ -55,7 +47,6 @@ public static class CommandValidationService {
 
     private static Command? ParseConfigCommand(string command, string value) {
         var input = FormatCommand(command); 
-        Console.WriteLine($"Formatted command: {input}");
 
         // see if the enum contains our input, if so, return the command type
         return Enum.TryParse<ConfigAction>(input, true, out var action)
