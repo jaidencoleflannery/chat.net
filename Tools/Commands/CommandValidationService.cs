@@ -5,11 +5,16 @@ namespace chat.net.Commands;
 public static class CommandValidationService {
 
     public static Command? ValidateCommands(string[] commands) {
+
+        if(commands.Length <= 0)
+            return null;
+
         int index = 0;
         foreach(var com in commands) {
             Console.WriteLine($"{index}: {com}");
             index++;
         }
+
         // this will be Input (normal chat) if the command is not found
         CommandAction? commandAction = GetCommandType(commands[0]);
         Command? command = null;
@@ -23,7 +28,7 @@ public static class CommandValidationService {
                     Console.WriteLine("Argument and value expected for --config.");
                     return null;
                 }
-                command = ParseConfigCommand(commands[2], commands[3]);
+                command = ParseConfigCommand(commands[1], commands[2]);
                 Console.WriteLine($"Command Found: {command}");
                 break; 
             // if it is just text, return the text
@@ -65,7 +70,7 @@ public static class CommandValidationService {
             return null;
 
         // convert the command to match our enum formatting
-        var input = command.Trim('-');
+        string input = command.Replace("-", "").Trim();
 
         return input;
     }
