@@ -11,9 +11,11 @@ public static class CommandService {
     };
 
     public static void Execute(Command command) {
-        if(command == null)
-            throw new ArgumentNullException(nameof(command));
-        // map contains all of our functions by type
+        if(command == null) {
+            Console.WriteLine("Execute failure, command is null.");
+            return;
+        }
+        // map contains all of our functions, keyed by type
         map[command.GetType()](command);
     }
 
