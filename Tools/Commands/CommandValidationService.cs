@@ -1,5 +1,3 @@
-using static chat.net.Commands.CommandActions;
-
 namespace chat.net.Commands;
 
 public static class CommandValidationService {
@@ -40,23 +38,52 @@ public static class CommandValidationService {
         var input = FormatCommand(command);
         
         // if command is in commandactions, return that, else it is input for the bot
-        return (Enum.TryParse<CommandActions.CommandAction>(input, true, out var action)) 
+        return (Enum.TryParse<CommandAction>(input, true, out var action)) 
             ? action
-            : CommandActions.CommandAction.Input;    
+            : CommandAction.Input;    
     }
 
     private static Command? ParseConfigCommand(string[] commands) {
         var input = FormatCommand(commands[1]); 
 
-        // see if the enum contains our input, if so, return the command type
-        Console.WriteLine($"!!{input}");
+        // see if the enum contains our input
+        // if enum requires no arguments
         if(Enum.TryParse<ConfigAction>(input, true, out var action))
-            return new Config(action, (commands.Length > 2) ? commands[2] : "");
-        else {
-            Console.WriteLine(action);
+            return new Config(action); 
+        else
             Console.WriteLine($"Argument {commands[1]} for --config could not be found");
-            return null;
+
+        // if enum requires arguments
+        if(Enum.TryParse<ConfigActionRequiresArgument>(input, true, out var actionWithArgument)) {
+            if(commands.Length < 3) {
+                Console.WriteLine($"--config {input} expects an argument but no argument was provided.");
+                return null;
+            }
+            switch (actionWithArgument) {
+                case ConfigActionRequiresArgument.SetProvider:
+                    return (VerifyProvider(commands[2])) 
+                        ? new Config(action, Value: commands[2])
+                        : null;
+
+                case ConfigActionRequiresArgument.SetModel:
+                    return new Config(action, Value: commands[2]);
+
+                default:
+                    return null;
+            }
         }
+        return null;
+    }
+
+    // check if action matches one of our providers
+    private static bool VerifyProvider(string argument) {
+        if(!Enum.TryParse<Providers>(argument.ToString(), true, out var result)) {
+            Console.WriteLine("Invalid provider argument, valid providers include:");
+            foreach(var provider in Enum.GetValues(typeof(Providers)))
+                Console.WriteLine(provider); 
+            return false;
+        }
+        return true;
     }
 
     // convert string into generic format
@@ -66,8 +93,6 @@ public static class CommandValidationService {
             return null;
 
         // convert the command to match our enum formatting
-        string input = command.Replace("-", "").Trim();
-
-        return input;
+        return command.Replace("-", "").Trim();
     }
 }

@@ -8,7 +8,7 @@ public static class ConversationService {
         // can grab their endpoint for our call.
         // we can leave Model to be free so it is future proof.
         using var client = new HttpClient();
-        HttpResponseMessage response = await client.GetAsync("")
-
+        //HttpResponseMessage response = await client.GetAsync("")
+        return "";
     }
 }

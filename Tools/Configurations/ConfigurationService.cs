@@ -5,7 +5,7 @@ namespace chat.net.Configurations;
 
 public static class ConfigurationService {
 
-    public static void SetModel(Config command) { 
+    public static void SetValue(Config command) { 
         if (command == null || string.IsNullOrWhiteSpace(command.Value))
             return;
 
@@ -28,7 +28,16 @@ public static class ConfigurationService {
             config = new Configuration(); 
         }
 
-        config.Model = command.Value.Trim();
+        switch (command.ActionArgument) {
+            case ConfigActionRequiresArgument.SetProvider:
+                config.Provider = command.Value.Trim();
+                break;
+
+            case ConfigActionRequiresArgument.SetModel:
+                config.Model = command.Value.Trim();
+                break;
+        }
+
         config.Path = path;
 
         Directory.CreateDirectory(dir); // we're overwriting the config anyways
@@ -42,7 +51,6 @@ public static class ConfigurationService {
         File.Move(tempPath, path, true);
         return;
     }
-
 
     public static void ClearConfig() { 
         if(!GetConfigPath(out var dir, out var path)) {

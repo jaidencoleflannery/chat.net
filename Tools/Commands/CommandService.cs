@@ -18,13 +18,14 @@ public static class CommandService {
     }
 
     public static void ExecuteConfigCommand(Config command) {
-        switch(command.Action) {
-            case ConfigAction.SetModel:
-                ConfigurationService.SetModel(command);
-                break;
-            case ConfigAction.ClearConfig:
-                ConfigurationService.ClearConfig();
-                break;
+        if(command.Action != null) {
+            switch(command.Action) { 
+                case ConfigAction.ClearConfig:
+                    ConfigurationService.ClearConfig();
+                    break;
+            }
+        } else if(command.ActionArgument != null) {
+            ConfigurationService.SetValue(command);
         }
     }
 
