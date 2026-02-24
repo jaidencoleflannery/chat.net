@@ -68,7 +68,7 @@ public static class CommandValidationService {
         // see if either enum contains our configuration command 
         // if enum requires no arguments
         if(Enum.TryParse<ConfigAction>(configCommand, true, out var action))
-            return new Config(action); 
+            return new Config(action);
         else
             Console.WriteLine($"Argument {commands[1]} for --config could not be found");
 
@@ -82,12 +82,12 @@ public static class CommandValidationService {
                 // provider has to match Providers enum
                 case ConfigActionRequiresArgument.SetProvider:
                     return (VerifyProvider(commands[2])) 
-                        ? new Config(action, Value: commands[2])
+                        ? new Config(ActionArgument: actionWithArgument, Value: commands[2])
                         : null;
 
                 // model can be anything (user's input is expected to match the endpoints expected value for model)
                 case ConfigActionRequiresArgument.SetModel:
-                    return new Config(action, Value: commands[2]);
+                    return new Config(ActionArgument: actionWithArgument, Value: commands[2]);
 
                 default:
                     return null;
