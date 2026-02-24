@@ -5,6 +5,29 @@ namespace chat.net.Configurations;
 
 public static class ConfigurationService {
 
+    public static string? GetProvider() {
+        if(!GetConfigPath(out var dir, out var path)) {
+            Console.WriteLine("Could not create configuration path - Configuration file not written.");
+            return null;
+        }
+
+        Configuration? config;
+
+        if(File.Exists(path)){
+            try {
+                string json = File.ReadAllText(path);
+                config = JsonSerializer.Deserialize<Configuration>(json)
+                    ?? new Configuration() { Path = path };
+            } catch (Exception) {
+                config = new Configuration() { Path = path };
+            }
+        } else {
+            config = new Configuration() { Path = path }; 
+        }
+
+        return config.Provider;
+    }
+
     public static Configuration? GetConfig() {
         if(!GetConfigPath(out var dir, out var path)) {
             Console.WriteLine("Could not create configuration path - Configuration file not written.");
