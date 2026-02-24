@@ -2,19 +2,26 @@ namespace chat.net.Commands;
 
 public static class CommandValidationService {
 
+    /// <summary>
+    /// Takes an array of strings and find's the matching Command.
+    /// Will return null on failure.
+    /// </summary>
+    /// <param name="commands">An array of strings representing the command, should be the user's input.</param>
+    /// <returns>A Command on success. Null on failure.</returns>
+    
     public static Command? ValidateCommands(string[] commands) {
-
-        if(commands.Length <= 0)
+        if(commands.Length <= 0) {
+            Console.WriteLine($"Arguments expected but no arguments were provided. \nUse -help for a list of commands.");
             return null;
+        }
 
         // this will be Input (normal chat) if the command is not found
-        CommandAction? commandAction = GetCommandType(commands[0]);
-        Command? command = null;
+        CommandAction? commandType = GetCommandType(commands[0]); 
 
-        // check if the provided command is one we support, and then call a subroutine for the subcommand
-        // or, return the command if it's just the user's message
-        switch (commandAction) {
-            // if it is a command, return the command
+        // call routine for the type of command
+        Command? command = null;
+        switch (commandType) {
+            // if it is a config, it needs atleast 1 argument
             case CommandAction.Config:
                 if(commands.Length < 2) {
                     Console.WriteLine("Argument expected for --config.");
@@ -22,49 +29,63 @@ public static class CommandValidationService {
                 }
                 command = ParseConfigCommand(commands);
                 break; 
-            // if it is just text, return the text
+
+            // if no command is found, we assume it is the message - return it as Input
             case CommandAction.Input:
-                // process the input
                 command = new Input(commands[0]);
                 break;
+
+            default:
+                Console.WriteLine("Command found but not configured.");
+                break;
+
             case null:
-                throw new Exception("Unexpected error in command validation.");
+                Console.WriteLine("Unexpected error in command validation.");
+                break;
         };
- 
+        
+        // on failure, command == null
         return command;
     } 
 
-    public static CommandAction? GetCommandType(string command) {
-        var input = FormatCommand(command);
-        
+    private static CommandAction? GetCommandType(string command) {
+        var input = FormatCommand(command); 
         // if command is in commandactions, return that, else it is input for the bot
         return (Enum.TryParse<CommandAction>(input, true, out var action)) 
             ? action
-            : CommandAction.Input;    
+            : CommandAction.Input;
     }
 
     private static Command? ParseConfigCommand(string[] commands) {
-        var input = FormatCommand(commands[1]); 
+        /*
+         * command[0] == --config
+         * command[1] == {ConfigCommand}
+         * command[2] == {Value}
+        */
 
-        // see if the enum contains our input
+        var configCommand = FormatCommand(commands[1]); 
+
+        // see if either enum contains our configuration command 
         // if enum requires no arguments
-        if(Enum.TryParse<ConfigAction>(input, true, out var action))
+        if(Enum.TryParse<ConfigAction>(configCommand, true, out var action))
             return new Config(action); 
         else
             Console.WriteLine($"Argument {commands[1]} for --config could not be found");
 
-        // if enum requires arguments
-        if(Enum.TryParse<ConfigActionRequiresArgument>(input, true, out var actionWithArgument)) {
+        // if enum requires an argument / input
+        if(Enum.TryParse<ConfigActionRequiresArgument>(configCommand, true, out var actionWithArgument)) {
             if(commands.Length < 3) {
-                Console.WriteLine($"--config {input} expects an argument but no argument was provided.");
+                Console.WriteLine($"--config {configCommand} expects an argument but no argument was provided.");
                 return null;
             }
             switch (actionWithArgument) {
+                // provider has to match Providers enum
                 case ConfigActionRequiresArgument.SetProvider:
                     return (VerifyProvider(commands[2])) 
                         ? new Config(action, Value: commands[2])
                         : null;
 
+                // model can be anything (user's input is expected to match the endpoints expected value for model)
                 case ConfigActionRequiresArgument.SetModel:
                     return new Config(action, Value: commands[2]);
 
@@ -87,7 +108,7 @@ public static class CommandValidationService {
     }
 
     // convert string into generic format
-    public static string? FormatCommand(string command) {
+    private static string? FormatCommand(string command) {
         // if there is no command, do nothing
         if(string.IsNullOrWhiteSpace(command))
             return null;
