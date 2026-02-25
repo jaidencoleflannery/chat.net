@@ -9,7 +9,7 @@ public class Program {
         if(command == null)
             return 1;
 
-        CommandService.Execute(command);
+        await CommandService.Execute(command);
 
         return 0;
     }

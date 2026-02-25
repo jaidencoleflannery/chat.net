@@ -5,21 +5,21 @@ namespace chat.net.Commands;
 
 public static class CommandService {
 
-    static Dictionary<Type, Action<Command>> map = new() {
+    static Dictionary<Type, Func<Command, Task>> map = new() {
         [typeof(Config)] = cmd => ExecuteConfigCommand((Config)cmd),
-        [typeof(Input)] = cmd => ExecuteInputCommand((Input)cmd),
+        [typeof(Input)] = async cmd => await ExecuteInputCommand((Input)cmd),
     };
 
-    public static void Execute(Command command) {
+    public static async Task Execute(Command command) {
         if(command == null) {
             Console.WriteLine("Execute failure, command is null.");
-            return;
+            Environment.Exit(1);
         }
         // map contains all of our functions, keyed by type
-        map[command.GetType()](command);
+        await map[command.GetType()](command);
     }
 
-    public static void ExecuteConfigCommand(Config command) {
+    public static async Task ExecuteConfigCommand(Config command) {
         if(command.Action != null) {
             switch(command.Action) { 
                 case ConfigAction.ClearConfig:
@@ -31,7 +31,7 @@ public static class CommandService {
         }
     }
 
-    public static void ExecuteInputCommand(Input command) {
-        ConversationService.Call(command.Text);
+    public static async Task ExecuteInputCommand(Input command) {
+        await ConversationService.Call(command.Text);
     }
 }

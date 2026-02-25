@@ -8,7 +8,7 @@ namespace chat.net.Conversations;
 
 public static class ConversationService {
 
-    static Dictionary<Providers, Func<string, string, string, string>> map = new() {
+    static Dictionary<Providers, Func<string, string, string, Task<string>>> map = new() {
         [Providers.Openai] = (input, model, key) => OpenAiCall(input, model, key),
         [Providers.Anthropic] = (input, model, key) => AnthropicCall(input, model, key),
         [Providers.Google] = (input, model, key) => GoogleCall(input, model, key),
@@ -16,7 +16,7 @@ public static class ConversationService {
         [Providers.Deepseek] = (input, model, key) => DeepseekCall(input, model, key),
     };
 
-    public static string? Call(string input) { 
+    public static async Task<string?> Call(string input) { 
         var providerString = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Provider)!;
         if(!Enum.TryParse<Providers>(providerString, out var provider))
             providerString = "";
@@ -25,46 +25,40 @@ public static class ConversationService {
         if(model == null)
             model = "";
 
-        if(!GetKey(provider, out var key)) {
+        var key = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Key);
+        if(key == null) {
             Console.WriteLine("Failed to get key. Set your API key for your desired model with 'ask --config --set-key <key>'");
-            return null;
+            Environment.Exit(1);
         }
-
-        return map[provider](input, model, key);
+        return await map[provider](input, model, key);
     }
 
-    public static string OpenAiCall(string input, string model, string key) =>
-        SendRequest("https://api.openai.com/v1/responses", input, model, key);
+    public static async Task<string> OpenAiCall(string input, string model, string key) =>
+        await SendRequest("https://api.openai.com/v1/responses", input, model, key);
 
-    public static string AnthropicCall(string input, string model, string key) {
-        Console.WriteLine(input);
+    public static async Task<string> AnthropicCall(string input, string model, string key) {
+        Console.WriteLine("anthropic");
         return "";
     }
 
-    public static string GoogleCall(string input, string model, string key) {
-        Console.WriteLine(input);
+    public static async Task<string> GoogleCall(string input, string model, string key) {
+        Console.WriteLine("google");
         return "";
     }
 
-    public static string XaiCall(string input, string model, string key) {
-        Console.WriteLine(input);
+    public static async Task<string> XaiCall(string input, string model, string key) {
+        Console.WriteLine("xai");
         return "";
     }
 
-    public static string DeepseekCall(string input, string model, string key) {
-        Console.WriteLine(input);
+    public static async Task<string> DeepseekCall(string input, string model, string key) {
+        Console.WriteLine("deepseek");
         return "";
     }
 
-    public static bool GetKey(Providers provider, out string key) {
-        key = Environment.GetEnvironmentVariable($"{provider.ToString().ToLower()}-key:")!;
-        return !(key == null);
-    }
-
-    public static string SendRequest(string url, string input, string model, string key) { 
+    public static async Task<string> SendRequest(string url, string input, string model, string key) { 
         var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Headers.Add("Content-Type", "application/json");
-        request.Headers.Add("Authorization", $"Bearer ${key}");
+        request.Headers.Add("Authorization", $"Bearer {key}");
 
         var json = JsonSerializer.Serialize(new {
             model,
@@ -74,13 +68,20 @@ public static class ConversationService {
         request.Content = new StringContent(
             json,
             Encoding.UTF8,
-            "application/x-www-form-urlencoded"
+            "application/json"
         );
-
-        Console.WriteLine(request);
+ 
 
         using var client = new HttpClient();
+        var response = await client.SendAsync(request);
 
-        return "";
+        try {
+            response.EnsureSuccessStatusCode();
+        } catch {
+            Console.WriteLine($"Response was not successful. {response.StatusCode}, {response.RequestMessage}");
+        }
+        var body = await response.Content.ReadAsStringAsync();
+
+        return body;
     }
 }

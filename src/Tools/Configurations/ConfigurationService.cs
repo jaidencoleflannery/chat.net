@@ -34,7 +34,6 @@ public static class ConfigurationService {
         }
 
         var response = property.GetValue(config) as string;
-        Console.WriteLine($"... {response}");
         return response;
     }
 
@@ -94,8 +93,7 @@ public static class ConfigurationService {
                 break;
 
             case ConfigActionRequiresArgument.SetKey:
-                Console.WriteLine($"SET KEY: {command.Value}");
-                SetKey(command.Value);
+                config.Key = command.Value.Trim();
                 break;
         }
 
@@ -146,19 +144,5 @@ public static class ConfigurationService {
             return false;
         }
         return true;
-    }
-
-    public static void SetKey(string key)
-{
-    try {
-        string name = GetValue(Configuration.ConfigurationAttributes.Provider);
-        Environment.SetEnvironmentVariable(name, key, EnvironmentVariableTarget.User);
-
-        Console.WriteLine($"USER readback: {Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.User)}");
-        Console.WriteLine($"PROCESS readback: {Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process)}"); 
-    } catch (Exception e) {
-        Console.WriteLine($"Failed to set key as environment variable.");
-        Environment.Exit(1);
-    }
-}
+    }            
 }
