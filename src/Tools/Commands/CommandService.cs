@@ -7,7 +7,7 @@ public static class CommandService {
 
     static Dictionary<Type, Action<Command>> map = new() {
         [typeof(Config)] = cmd => ExecuteConfigCommand((Config)cmd),
-        [typeof(Input)] = cmd => ExecuteInputCommand((Input)cmd)
+        [typeof(Input)] = cmd => ExecuteInputCommand((Input)cmd),
     };
 
     public static void Execute(Command command) {

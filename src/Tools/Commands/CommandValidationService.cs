@@ -69,8 +69,6 @@ public static class CommandValidationService {
         // if enum requires no arguments
         if(Enum.TryParse<ConfigAction>(configCommand, true, out var action))
             return new Config(action);
-        else
-            Console.WriteLine($"Argument {commands[1]} for --config could not be found");
 
         // if enum requires an argument / input
         if(Enum.TryParse<ConfigActionRequiresArgument>(configCommand, true, out var actionWithArgument)) {
@@ -79,33 +77,37 @@ public static class CommandValidationService {
                 return null;
             }
             switch (actionWithArgument) {
-                // provider has to match Providers enum
+                // provider has to match a value from Providers enum
                 case ConfigActionRequiresArgument.SetProvider:
-                    return (VerifyProvider(commands[2])) 
-                        ? new Config(ActionArgument: actionWithArgument, Value: commands[2])
-                        : null;
+                    if(VerifyValue<Providers>(commands[2])) {
+                        return new Config(ActionArgument: actionWithArgument, Value: commands[2]);
+                    } else {
+                        Console.WriteLine($"Invalid provider. Valid providers include:");
+                        foreach(var provider in Enum.GetValues(typeof(Providers))) 
+                            Console.WriteLine(provider);
+                        Environment.Exit(1);
+                        break;
+                    }
+
+                case ConfigActionRequiresArgument.SetKey:
+                    return new Config(ActionArgument: actionWithArgument, Value: commands[2]); 
 
                 // model can be anything (user's input is expected to match the endpoints expected value for model)
                 case ConfigActionRequiresArgument.SetModel:
                     return new Config(ActionArgument: actionWithArgument, Value: commands[2]);
 
                 default:
-                    return null;
+                    Environment.Exit(1);
+                    break;
             }
         }
+
         return null;
     }
 
-    // check if action matches one of our providers
-    private static bool VerifyProvider(string argument) {
-        if(!Enum.TryParse<Providers>(argument.ToString(), true, out var result)) {
-            Console.WriteLine("Invalid provider argument, valid providers include:");
-            foreach(var provider in Enum.GetValues(typeof(Providers)))
-                Console.WriteLine(provider); 
-            return false;
-        }
-        return true;
-    }
+    // check if action matches one of our values in the provided enum
+    private static bool VerifyValue<TEnum>(string argument) where TEnum : struct, Enum =>
+        Enum.TryParse<TEnum>(argument, true, out var result);
 
     // convert string into generic format
     private static string? FormatCommand(string command) {

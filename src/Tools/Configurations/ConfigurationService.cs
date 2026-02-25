@@ -5,10 +5,10 @@ namespace chat.net.Configurations;
 
 public static class ConfigurationService {
 
-    public static string? GetProvider() {
+    public static string GetValue(Configuration.ConfigurationAttributes field) {
         if(!GetConfigPath(out var dir, out var path)) {
             Console.WriteLine("Could not create configuration path - Configuration file not written.");
-            return null;
+            Environment.Exit(1);
         }
 
         Configuration? config;
@@ -25,7 +25,17 @@ public static class ConfigurationService {
             config = new Configuration() { Path = path }; 
         }
 
-        return config.Provider;
+        var type = config.GetType();
+        var property = type.GetProperty(field.ToString());
+
+        if(property == null) {
+            Console.WriteLine("Property not found.");
+            Environment.Exit(1);
+        }
+
+        var response = property.GetValue(config) as string;
+        Console.WriteLine($"... {response}");
+        return response;
     }
 
     public static Configuration? GetConfig() {
@@ -82,6 +92,11 @@ public static class ConfigurationService {
             case ConfigActionRequiresArgument.SetModel:
                 config.Model = command.Value.Trim();
                 break;
+
+            case ConfigActionRequiresArgument.SetKey:
+                Console.WriteLine($"SET KEY: {command.Value}");
+                SetKey(command.Value);
+                break;
         }
 
         config.Path = path;
@@ -132,4 +147,18 @@ public static class ConfigurationService {
         }
         return true;
     }
+
+    public static void SetKey(string key)
+{
+    try {
+        string name = GetValue(Configuration.ConfigurationAttributes.Provider);
+        Environment.SetEnvironmentVariable(name, key, EnvironmentVariableTarget.User);
+
+        Console.WriteLine($"USER readback: {Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.User)}");
+        Console.WriteLine($"PROCESS readback: {Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process)}"); 
+    } catch (Exception e) {
+        Console.WriteLine($"Failed to set key as environment variable.");
+        Environment.Exit(1);
+    }
+}
 }

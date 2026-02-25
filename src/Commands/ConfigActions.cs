@@ -8,5 +8,6 @@ public enum ConfigAction {
 
 public enum ConfigActionRequiresArgument {
     SetModel,
-    SetProvider
+    SetProvider,
+    SetKey
 }
