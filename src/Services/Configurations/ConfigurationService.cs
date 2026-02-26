@@ -60,13 +60,13 @@ public static class ConfigurationService {
         return config;
     }
 
-    public static void SetValue(Config command) { 
+    public static bool SetValue(Config command) { 
         if (command == null || string.IsNullOrWhiteSpace(command.Value))
-            return;
+            return false;
 
         if(!GetConfigPath(out var dir, out var path)) {
             Console.WriteLine("Could not create configuration path - Configuration file not written.");
-            return;
+            return false;
         }
 
         Configuration? config;
@@ -106,15 +106,21 @@ public static class ConfigurationService {
 
         var tempPath = path + ".tmp";
 
-        File.WriteAllText(tempPath, jsonConfig);
-        File.Move(tempPath, path, true);
-        return;
+        try {
+            File.WriteAllText(tempPath, jsonConfig);
+            File.Move(tempPath, path, true);
+        } catch {
+            Console.WriteLine("Failed to write config.");
+            return false;
+        }
+
+        return true;
     }
 
-    public static void ClearConfig() { 
+    public static bool ClearConfig() { 
         if(!GetConfigPath(out var dir, out var path)) {
             Console.WriteLine("Could not create configuration path - Configuration file not written.");
-            return;
+            return false;
         }
         
         Configuration config = new Configuration() { Path = path };
@@ -126,9 +132,15 @@ public static class ConfigurationService {
 
         var tempPath = path + ".tmp";
 
-        File.WriteAllText(tempPath, jsonConfig);
-        File.Move(tempPath, path, true);
-        return;
+        try {
+            File.WriteAllText(tempPath, jsonConfig);
+            File.Move(tempPath, path, true);
+        } catch {
+            Console.WriteLine("Failed to clear config.");
+            return false;
+        }
+
+        return true;
     }
 
     public static bool GetConfigPath(out string dir, out string path) {

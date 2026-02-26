@@ -1,5 +1,6 @@
 ﻿using chat.net.Models;
 using chat.net.Commands;
+using chat.net.Conversations;
 
 namespace Program;
 
@@ -10,7 +11,15 @@ public class Program {
         if(command == null)
             return 1;
 
-        await CommandService.Execute(command);
+        // grab the last ResponseId (this is handled here so we can rely on caching in other implementations)
+        string? previousResponseId = null;
+        
+        // execute the command
+        ResponseDto result = await CommandService.Execute(command, previousResponseId);
+
+        // push response to user
+        if(result is AiResponseDto ai)
+            ResponseService.Print(ai);
 
         return 0;
     }

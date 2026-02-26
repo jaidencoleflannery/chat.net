@@ -2,8 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace chat.net.Models;
 
-public class OpenAiResponseDto : ResponseDto {
-    public OpenAiResponseDto() { }
+public class OpenAiResponseDto : AiResponseDto {
+    public OpenAiResponseDto(bool isSuccessful, Providers provider) : base(isSuccessful, provider) { }
     
     [JsonPropertyName("id")]
     public string Id { get; init; } = string.Empty;
