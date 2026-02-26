@@ -4,6 +4,10 @@ using chat.net.Conversations;
 
 namespace Program;
 
+/// <summary>
+/// Provides an engine for running CLI commands to chat with AI in a scoped lifetime.
+/// </summary>
+
 public class Program {
     static async Task<int> Main(string[] args) {
         // validate the input command
