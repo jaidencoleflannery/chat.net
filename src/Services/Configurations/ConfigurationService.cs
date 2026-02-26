@@ -1,5 +1,5 @@
 using System.Text.Json;
-using chat.net.Commands;
+using chat.net.Models;
 
 namespace chat.net.Configurations;
 

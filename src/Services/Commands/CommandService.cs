@@ -1,5 +1,6 @@
 using chat.net.Conversations;
 using chat.net.Configurations;
+using chat.net.Models;
 
 namespace chat.net.Commands;
 

@@ -1,4 +1,4 @@
-namespace chat.net.Commands;
+namespace chat.net.Models;
 
 public enum Providers {
     Openai,

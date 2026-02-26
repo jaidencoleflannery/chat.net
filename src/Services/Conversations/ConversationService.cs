@@ -1,8 +1,8 @@
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Net.Http.Json;
 using chat.net.Configurations;
-using chat.net.Commands;
+using chat.net.Models;
 
 namespace chat.net.Conversations;
 
@@ -78,10 +78,11 @@ public static class ConversationService {
         try {
             response.EnsureSuccessStatusCode();
         } catch {
-            Console.WriteLine($"Response was not successful. {response.StatusCode}, {response.RequestMessage}");
+            Console.WriteLine($"Response was not successful. {response.StatusCode}, {await response.Content.ReadAsStringAsync()}");
         }
-        var body = await response.Content.ReadAsStringAsync();
+        var body = await response.Content.ReadFromJsonAsync<OpenAiResponseDto>();
+        Console.WriteLine($"{body?.Output?[0]?.Content?[0]?.Text}");
 
-        return body;
+        return "";
     }
 }

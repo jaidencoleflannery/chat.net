@@ -1,4 +1,4 @@
-namespace chat.net.Commands;
+namespace chat.net.Models;
 
 public record Config(ConfigAction? Action = null, ConfigActionRequiresArgument? ActionArgument = null, string? Value = null) : Command; 
 

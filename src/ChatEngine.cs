@@ -1,4 +1,5 @@
-﻿using chat.net.Commands;
+﻿using chat.net.Models;
+using chat.net.Commands;
 
 namespace Program;
 

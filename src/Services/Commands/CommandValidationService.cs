@@ -1,3 +1,5 @@
+using chat.net.Models;
+
 namespace chat.net.Commands;
 
 public static class CommandValidationService {
