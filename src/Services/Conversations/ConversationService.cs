@@ -34,40 +34,71 @@ public static class ConversationService {
         return await map[provider](input, model, PreviousResponseId, key);
     }
 
-    public static async Task<ResponseDto> OpenAiCall(string input, string model, string? previousResponseId, string key) =>
-        await SendRequest("https://api.openai.com/v1/responses", input, model, previousResponseId, key);
-
-    public static async Task<ResponseDto> AnthropicCall(string input, string model, string? previousResponseId, string key) =>
-        await SendRequest("url", input, model, previousResponseId, key);
-        
-    public static async Task<ResponseDto> GoogleCall(string input, string model, string? previousResponseId, string key) =>
-        await SendRequest("url", input, model, previousResponseId, key);
-
-    public static async Task<ResponseDto> XaiCall(string input, string model, string? previousResponseId, string key) =>
-        await SendRequest("url", input, model, previousResponseId, key);
-
-    public static async Task<ResponseDto> DeepseekCall(string input, string model, string? previousResponseId, string key) =>
-        await SendRequest("url", input, model, previousResponseId, key);
-
-
-    public static async Task<OpenAiResponseDto> SendRequest(string url, string input, string model, string? PreviousResponseId, string key) {
-        var request = new HttpRequestMessage(HttpMethod.Post, url);
+    public static async Task<ResponseDto> OpenAiCall(string input, string model, string? previousResponseId, string key) {
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
         request.Headers.Add("Authorization", $"Bearer {key}");
 
         var json = JsonSerializer.Serialize(new {
             model = model,
             input = input,
-            previous_response_id = PreviousResponseId 
+            previous_response_id = previousResponseId 
         });
 
         request.Content = new StringContent(
             json,
             Encoding.UTF8,
             "application/json"
-        ); 
+        );
+
+        return await SendRequest(request, input, model, previousResponseId);
+    }
+
+    public static async Task<ResponseDto> AnthropicCall(string input, string model, string? previousResponseId, string key) {
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+        request.Headers.Add("x-api-key", key);
+        request.Headers.Add("anthropic-version", "2023-06-01");
+
+        var json = JsonSerializer.Serialize(new {
+            model = model,
+            max_tokens = 1000, // need to make this configurable
+            messages = new[] {
+                new { 
+                    role = "user",
+                    content = input
+                }
+            },
+        });
+
+        request.Content = new StringContent(
+            json,
+            Encoding.UTF8,
+            "application/json"
+        );
+
+        return await SendRequest(request, input, model, previousResponseId);
+    }
+    
+    public static async Task<ResponseDto> GoogleCall(string input, string model, string? previousResponseId, string key) {
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+        return await SendRequest(request, input, model, previousResponseId);
+    }
+
+    public static async Task<ResponseDto> XaiCall(string input, string model, string? previousResponseId, string key) {
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+        return await SendRequest(request, input, model, previousResponseId);
+    }
+
+    public static async Task<ResponseDto> DeepseekCall(string input, string model, string? previousResponseId, string key) {
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+        return await SendRequest(request, input, model, previousResponseId);
+    }
+
+    public static async Task<OpenAiResponseDto> SendRequest(HttpRequestMessage request, string input, string model, string? PreviousResponseId) {  
 
         using var client = new HttpClient();
         var response = await client.SendAsync(request);
+
+        Console.WriteLine(await response.Content.ReadAsStringAsync());
 
         response.EnsureSuccessStatusCode(); 
 
