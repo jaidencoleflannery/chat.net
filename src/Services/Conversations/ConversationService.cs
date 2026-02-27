@@ -8,7 +8,7 @@ namespace chat.net.Conversations;
 
 public static class ConversationService {
  
-    static Dictionary<Providers, Func<string, string, string?, string, Task<ResponseDto?>>> map = new() {
+    static Dictionary<Providers, Func<string, string, string?, string, Task<ResponseDto>>> map = new() {
         [Providers.Openai] = (input, model, previousResponseId, key) => OpenAiCall(input, model, previousResponseId, key),
         [Providers.Anthropic] = (input, model, previousResponseId, key) => AnthropicCall(input, model, previousResponseId, key),
         [Providers.Google] = (input, model, previousResponseId, key) => GoogleCall(input, model, previousResponseId, key),
@@ -18,18 +18,18 @@ public static class ConversationService {
 
     public static async Task<ResponseDto> Call(string input, string? PreviousResponseId) { 
         var providerString = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Provider)!;
+        if(string.IsNullOrWhiteSpace(providerString))
+            throw new InvalidOperationException("Could not pull value for provider from config.");
         if(!Enum.TryParse<Providers>(providerString, out var provider))
-            providerString = "";
+            throw new InvalidOperationException("Could not verify provider value pulled from config.");
 
         var model = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Model)!;
         if(model == null)
-            model = "";
+            throw new InvalidOperationException("Could not pull value for model from config.");
 
         var key = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Key);
-        if(key == null) {
-            Console.WriteLine("Failed to get key. Set your API key for your desired model with 'ask --config --set-key <key>'");
-            Environment.Exit(1);
-        }
+        if(key == null)
+            throw new InvalidOperationException("Failed to get key from config. Set your API key for your desired model with 'ask --config --set-key <key>'");
 
         return await map[provider](input, model, PreviousResponseId, key);
     }
@@ -37,25 +37,18 @@ public static class ConversationService {
     public static async Task<ResponseDto> OpenAiCall(string input, string model, string? previousResponseId, string key) =>
         await SendRequest("https://api.openai.com/v1/responses", input, model, previousResponseId, key);
 
-    public static async Task<ResponseDto> AnthropicCall(string input, string model, string? previousResponseId, string key) {
-        Console.WriteLine("anthropic");
-        return null;
-    }
+    public static async Task<ResponseDto> AnthropicCall(string input, string model, string? previousResponseId, string key) =>
+        await SendRequest("url", input, model, previousResponseId, key);
+        
+    public static async Task<ResponseDto> GoogleCall(string input, string model, string? previousResponseId, string key) =>
+        await SendRequest("url", input, model, previousResponseId, key);
 
-    public static async Task<ResponseDto> GoogleCall(string input, string model, string? previousResponseId, string key){
-        Console.WriteLine("google");
-        return null;
-    }
+    public static async Task<ResponseDto> XaiCall(string input, string model, string? previousResponseId, string key) =>
+        await SendRequest("url", input, model, previousResponseId, key);
 
-    public static async Task<ResponseDto> XaiCall(string input, string model, string? previousResponseId, string key) {
-        Console.WriteLine("xai");
-        return null;
-    }
+    public static async Task<ResponseDto> DeepseekCall(string input, string model, string? previousResponseId, string key) =>
+        await SendRequest("url", input, model, previousResponseId, key);
 
-    public static async Task<ResponseDto> DeepseekCall(string input, string model, string? previousResponseId, string key) {
-        Console.WriteLine("deepseek");
-        return null;
-    }
 
     public static async Task<OpenAiResponseDto> SendRequest(string url, string input, string model, string? PreviousResponseId, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, url);
@@ -76,22 +69,12 @@ public static class ConversationService {
         using var client = new HttpClient();
         var response = await client.SendAsync(request);
 
-        try {
-            response.EnsureSuccessStatusCode();
-        } catch {
-            Console.WriteLine($"Response was not successful. {response.StatusCode}, {await response.Content.ReadAsStringAsync()}");
-            return null;
-        }
+        response.EnsureSuccessStatusCode(); 
 
-        try {
-            var body = await response.Content.ReadFromJsonAsync<OpenAiResponseDto>();
-            if(body == null) {
-                Console.WriteLine($"Body could not be parsed from response. {body?.ToString()}"); 
-                return null;
-            } 
-            return body;
-        } catch (Exception e){
-        }
-        return null;
+        var body = await response.Content.ReadFromJsonAsync<OpenAiResponseDto>();
+        if(body == null)
+            throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
+
+        return body;
     }
 }
