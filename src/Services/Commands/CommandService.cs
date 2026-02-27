@@ -14,7 +14,7 @@ public static class CommandService {
         [typeof(Input)] = async (cmd, previousResponseId) => await ExecuteInputCommand((Input)cmd, previousResponseId),
     };
 
-    public static async Task<ResponseDto?> Execute(Command command, string? previousResponseId) {
+    public static async Task<ResponseDto> Execute(Command command, string? previousResponseId) {
         if(command == null) 
             throw new Exception("Execute failure, command is null.");
         // Map contains all of our functions, keyed by type
