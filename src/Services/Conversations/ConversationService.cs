@@ -20,7 +20,7 @@ public static class ConversationService {
         var providerString = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Provider)!;
         if(string.IsNullOrWhiteSpace(providerString))
             throw new InvalidOperationException("Could not pull value for provider from config.");
-        if(!Enum.TryParse<Providers>(providerString, out var provider))
+        if(!Enum.TryParse<Providers>(providerString, true, out var provider))
             throw new InvalidOperationException("Could not verify provider value pulled from config.");
 
         var model = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Model)!;
