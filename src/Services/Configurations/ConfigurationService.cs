@@ -66,6 +66,10 @@ public static class ConfigurationService {
             case ConfigActionRequiresArgument.SetKey:
                 config.Key = command.Value.Trim();
                 break;
+
+            case ConfigActionRequiresArgument.SetPreviousResponseId:
+                config.PreviousResponseId = command.Value.Trim();
+                break;
         }
 
         config.Path = path;

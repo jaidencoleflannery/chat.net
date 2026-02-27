@@ -41,7 +41,7 @@ public static class CommandService {
             }
         else
             throw new ArgumentNullException($"{nameof(command.Action)} and {nameof(command.ActionArgument)}");
-    }
+        }
 
     public static async Task<ResponseDto> ExecuteInputCommand(Input command, string? previousResponseId) =>
         await ConversationService.Call(command.Text, previousResponseId);

@@ -1,6 +1,7 @@
 ﻿using chat.net.Models;
 using chat.net.Commands;
 using chat.net.Conversations;
+using chat.net.Configurations;
 
 namespace Program;
 
@@ -15,9 +16,9 @@ public class Program {
             Command? command = CommandValidationService.ValidateCommands(args); 
             if(command == null)
                 return 1;
-
-            // grab the last ResponseId (this is handled here so we can rely on caching in other implementations)
-            string? previousResponseId = null;
+ 
+            // if null, new conversation
+            var previousResponseId = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.PreviousResponseId);
             
             // execute the command
             ResponseDto result = await CommandService.Execute(command, previousResponseId);

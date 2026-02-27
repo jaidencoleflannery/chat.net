@@ -18,7 +18,7 @@ public static class ConversationService {
         [Providers.Deepseek] = (input, model, previousResponseId, key) => DeepseekCall(input, model, previousResponseId, key),
     };
 
-    public static async Task<ResponseDto> Call(string input, string? PreviousResponseId) { 
+    public static async Task<ResponseDto> Call(string input, string? previousResponseId) { 
         var providerString = ConfigurationService.GetValue(Provider)!;
         if(string.IsNullOrWhiteSpace(providerString))
             throw new InvalidOperationException("Could not pull value for provider from config.");
@@ -31,19 +31,24 @@ public static class ConversationService {
 
         var key = ConfigurationService.GetValue(Key);
         if(key == null)
-            throw new InvalidOperationException("Failed to get key from config. Set your API key for your desired model with 'ask --config --set-key <key>'");
+            throw new InvalidOperationException("Failed to get key from config. Set your API key for your desired model with 'ask --config --set-key <key>'");  
 
-        return await map[provider](input, model, PreviousResponseId, key);
+        return await map[provider](input, model, previousResponseId, key);
     }
 
     public static async Task<ResponseDto> OpenAiCall(string input, string model, string? previousResponseId, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
         request.Headers.Add("Authorization", $"Bearer {key}");
 
+        string? conversationId = null;
+
+        if(!(string.IsNullOrWhiteSpace(previousResponseId) || previousResponseId == "empty"))
+            conversationId = previousResponseId;
+
         var json = JsonSerializer.Serialize(new {
             model = model,
             input = input,
-            previous_response_id = previousResponseId 
+            previous_response_id = conversationId
         });
 
         request.Content = new StringContent(
@@ -52,14 +57,21 @@ public static class ConversationService {
             "application/json"
         );
 
-        var response = await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request);
 
-        AiResponseDto? body = await response.Content.ReadFromJsonAsync<OpenAiResponseDto>();
+        OpenAiResponseDto? body = await response.Content.ReadFromJsonAsync<OpenAiResponseDto>();
         if(body == null)
             throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
 
         body.Provider = Providers.Openai;
-        return body;    
+
+        Config? configUpdate = new Config() { 
+            ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, 
+            Value = body.Id ?? "empty"
+        };
+        ConfigurationService.SetValue(configUpdate);
+
+        return body; 
     }
 
     public static async Task<ResponseDto> AnthropicCall(string input, string model, string? previousResponseId, string key) {
@@ -84,11 +96,15 @@ public static class ConversationService {
             "application/json"
         );
 
-        var response = await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request);
 
-        AiResponseDto? body = await response.Content.ReadFromJsonAsync<AnthropicResponseDto>();
+        AnthropicResponseDto? body = await response.Content.ReadFromJsonAsync<AnthropicResponseDto>();
         if(body == null)
             throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
+
+        var id = body.Id;
+        Config configConversationUpdate = new() { ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, Value = id };
+        ConfigurationService.SetValue(configConversationUpdate);
 
         body.Provider = Providers.Anthropic;
         return body;    
@@ -96,7 +112,7 @@ public static class ConversationService {
     
     public static async Task<ResponseDto> GoogleCall(string input, string model, string? previousResponseId, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
-        var response = await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request);
 
         AiResponseDto? body = await response.Content.ReadFromJsonAsync<AiResponseDto>();
         if(body == null)
@@ -108,7 +124,7 @@ public static class ConversationService {
 
     public static async Task<ResponseDto> XaiCall(string input, string model, string? previousResponseId, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
-        var response = await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request);
 
         AiResponseDto? body = await response.Content.ReadFromJsonAsync<AiResponseDto>();
         if(body == null)
@@ -120,7 +136,7 @@ public static class ConversationService {
 
     public static async Task<ResponseDto> DeepseekCall(string input, string model, string? previousResponseId, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
-        var response = await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request);
 
         AiResponseDto body = await response.Content.ReadFromJsonAsync<AiResponseDto>();
         if(body == null)
@@ -130,7 +146,7 @@ public static class ConversationService {
         return body;
     }
 
-    public static async Task<HttpResponseMessage> SendRequest(HttpRequestMessage request, string input, string model, string? PreviousResponseId) {  
+    public static async Task<HttpResponseMessage> SendRequest(HttpRequestMessage request) {  
 
         using var client = new HttpClient();
         var response = await client.SendAsync(request);

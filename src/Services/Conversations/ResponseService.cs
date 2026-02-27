@@ -10,22 +10,37 @@ public static class ResponseService {
         var properties = result.GetType().GetProperties();
         if(properties == null)
             throw new InvalidOperationException($"Could not get type or properties from {nameof(properties)}");
+
+        var builder = new System.Text.StringBuilder();
+
         switch (result.Provider) {
             case Providers.Openai:
                 var openaiResult = ((OpenAiResponseDto)result);
                 var openaiOutput = openaiResult.Output;
                 if(openaiOutput == null || openaiOutput.Length <= 0)
                     throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(openaiOutput)} from {nameof(result)}");
+ 
+                for(int i = 0; i < openaiOutput.Length; i++) {
+                    var contents = openaiOutput[i].Content;
+                    if(contents == null || contents.Length <= 0)
+                        continue;
 
-                var openaiContent = openaiOutput[0].Content;
-                if(openaiContent == null || openaiContent.Length <= 0)
-                    throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(openaiContent)} from {nameof(result)}");
+                    for(int j = 0; j < contents.Length; j++) {
+                        var content = contents[j];
+                        if(!string.Equals(content.Type, "output_text", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        if(!string.IsNullOrWhiteSpace(content.Text)) {
+                            if(builder.Length > 0) 
+                                builder.AppendLine();
+                            builder.Append(content.Text);
+                        }
+                    }
+                }
 
-                var openaiText = openaiContent[0].Text;
-                if(string.IsNullOrWhiteSpace(openaiText))
-                    throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(openaiText)} from {nameof(result)}");
-                    
-                Console.WriteLine(openaiText);
+                if(builder.Length <= 0)
+                    throw new InvalidOperationException("Could not find any text within OpenAi response.");
+
+                Console.WriteLine(builder.ToString());
                 break;
 
             case Providers.Anthropic:
