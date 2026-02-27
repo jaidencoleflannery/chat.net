@@ -12,6 +12,7 @@ public static class CommandService {
     static Dictionary<Type, Func<Command, string?, Task<ResponseDto>>> map = new() {
         [typeof(Config)] = (cmd, previousResponseId) => ExecuteConfigCommand((Config)cmd, previousResponseId),
         [typeof(Input)] = async (cmd, previousResponseId) => await ExecuteInputCommand((Input)cmd, previousResponseId),
+        [typeof(Clear)] = (cmd, previousResponseId) => ExecuteClearCommand((Clear)cmd, previousResponseId)
     };
 
     public static async Task<ResponseDto> Execute(Command command, string? previousResponseId) {
@@ -45,4 +46,9 @@ public static class CommandService {
 
     public static async Task<ResponseDto> ExecuteInputCommand(Input command, string? previousResponseId) =>
         await ConversationService.Call(command.Text, previousResponseId);
+
+    public static Task<ResponseDto> ExecuteClearCommand(Command command, string? previousResponseId) {
+        Config? configUpdate = new Config() { ActionArgument = SetPreviousResponseId, Value = "empty" };
+        return Task.FromResult( new ResponseDto(ConfigurationService.SetValue(configUpdate)));
+    }
 }

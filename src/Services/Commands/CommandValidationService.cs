@@ -28,6 +28,10 @@ public static class CommandValidationService {
                 command = ParseConfigCommand(commands);
                 break; 
 
+            case CommandAction.Clear:
+                command = new Clear();
+                break;
+
             // if no command is found, we assume it is the message - return it as Input
             case CommandAction.Input:
                 command = new Input(commands[0]);

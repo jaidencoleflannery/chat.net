@@ -4,5 +4,6 @@ public record CommandActions : Command;
 
 public enum CommandAction {
     Config,
+    Clear,
     Input,
 }
