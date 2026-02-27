@@ -1,4 +1,4 @@
-namespace chat.net.Configurations;
+namespace chat.net.Models;
 
 public class Configuration {
     public string Path { get; set; } = String.Empty;

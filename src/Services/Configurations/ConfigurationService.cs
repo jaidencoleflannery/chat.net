@@ -6,45 +6,28 @@ namespace chat.net.Configurations;
 public static class ConfigurationService {
 
     public static string GetValue(Configuration.ConfigurationAttributes field) {
-        if(!GetConfigPath(out var dir, out var path)) {
-            Console.WriteLine("Could not create configuration path - Configuration file not written.");
-            Environment.Exit(1);
-        }
+        if(!GetConfigPath(out var dir, out var path))
+            throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
 
-        Configuration? config;
-
-        if(File.Exists(path)){
-            try {
-                string json = File.ReadAllText(path);
-                config = JsonSerializer.Deserialize<Configuration>(json)
-                    ?? new Configuration() { Path = path };
-            } catch (Exception) {
-                config = new Configuration() { Path = path };
-            }
-        } else {
-            config = new Configuration() { Path = path }; 
-        }
+        var config = GetConfig(dir, path); 
+        if(config == null)
+            throw new InvalidOperationException($"Config could not be read or created.");
 
         var type = config.GetType();
-        var property = type.GetProperty(field.ToString());
 
-        if(property == null) {
-            Console.WriteLine("Property not found.");
-            Environment.Exit(1);
-        }
+        var property = type.GetProperty(field.ToString());
+        if(property == null)
+            throw new InvalidOperationException($"Property from {type} was null.");
 
         var response = property.GetValue(config) as string;
+        if(response == null)
+            throw new InvalidOperationException($"Property value {config} was null.");
+
         return response;
     }
 
-    public static Configuration? GetConfig() {
-        if(!GetConfigPath(out var dir, out var path)) {
-            Console.WriteLine("Could not create configuration path - Configuration file not written.");
-            return null;
-        }
-
+    public static Configuration GetConfig(string dir, string path) { 
         Configuration? config;
-
         if(File.Exists(path)){
             try {
                 string json = File.ReadAllText(path);
@@ -62,26 +45,14 @@ public static class ConfigurationService {
 
     public static bool SetValue(Config command) { 
         if (command == null || string.IsNullOrWhiteSpace(command.Value))
-            return false;
+            throw new ArgumentNullException(nameof(command));
 
-        if(!GetConfigPath(out var dir, out var path)) {
-            Console.WriteLine("Could not create configuration path - Configuration file not written.");
-            return false;
-        }
+        if(!GetConfigPath(out var dir, out var path))
+            throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
 
-        Configuration? config;
-
-        if(File.Exists(path)){
-            try {
-                string json = File.ReadAllText(path);
-                config = JsonSerializer.Deserialize<Configuration>(json)
-                    ?? new Configuration();
-            } catch (Exception) {
-                config = new Configuration();
-            }
-        } else {
-            config = new Configuration(); 
-        }
+        var config = GetConfig(dir, path); 
+        if(config == null)
+            throw new InvalidOperationException($"Config could not be read or created.");
 
         switch (command.ActionArgument) {
             case ConfigActionRequiresArgument.SetProvider:
@@ -109,19 +80,16 @@ public static class ConfigurationService {
         try {
             File.WriteAllText(tempPath, jsonConfig);
             File.Move(tempPath, path, true);
-        } catch {
-            Console.WriteLine("Failed to write config.");
-            return false;
+        } catch (Exception exception){
+            throw new IOException($"Could not write file. {exception}");
         }
 
         return true;
     }
 
     public static bool ClearConfig() { 
-        if(!GetConfigPath(out var dir, out var path)) {
-            Console.WriteLine("Could not create configuration path - Configuration file not written.");
-            return false;
-        }
+        if(!GetConfigPath(out var dir, out var path))
+            throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
         
         Configuration config = new Configuration() { Path = path };
 
@@ -135,9 +103,8 @@ public static class ConfigurationService {
         try {
             File.WriteAllText(tempPath, jsonConfig);
             File.Move(tempPath, path, true);
-        } catch {
-            Console.WriteLine("Failed to clear config.");
-            return false;
+        } catch (Exception exception){
+            throw new IOException($"Failed to clear config. {exception}");
         }
 
         return true;
@@ -150,10 +117,8 @@ public static class ConfigurationService {
 
             dir = Path.Combine(home, ".config", "chat.net");
             path = Path.Combine(dir, "config.json");
-        } catch (Exception) {
-            dir = string.Empty;
-            path = string.Empty;
-            return false;
+        } catch (Exception exception) {
+            throw new IOException($"Failed to get path. {exception}");
         }
         return true;
     }            
