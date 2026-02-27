@@ -13,20 +13,36 @@ public static class ResponseService {
         switch (result.Provider) {
             case Providers.Openai:
                 var openaiResult = ((OpenAiResponseDto)result);
-                var output = openaiResult.Output;
-                if(output == null || output.Length <= 0)
-                    throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(output)} from {nameof(result)}");
+                var openaiOutput = openaiResult.Output;
+                if(openaiOutput == null || openaiOutput.Length <= 0)
+                    throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(openaiOutput)} from {nameof(result)}");
 
-                var content = openaiResult.Output![0].Content;
-                if(content == null || content.Length <= 0)
-                    throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(content)} from {nameof(result)}");
+                var openaiContent = openaiOutput[0].Content;
+                if(openaiContent == null || openaiContent.Length <= 0)
+                    throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(openaiContent)} from {nameof(result)}");
 
-                var text = content[0].Text;
-                if(string.IsNullOrWhiteSpace(text))
-                    throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(text)} from {nameof(result)}");
+                var openaiText = openaiContent[0].Text;
+                if(string.IsNullOrWhiteSpace(openaiText))
+                    throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(openaiText)} from {nameof(result)}");
                     
-                Console.WriteLine(text);
+                Console.WriteLine(openaiText);
                 break;
+
+            case Providers.Anthropic:
+                if(result is AnthropicResponseDto anthropicResult) {
+                    var anthropicContent = anthropicResult.Content;
+                    if(anthropicContent == null || anthropicContent.Length <= 0)
+                        throw new InvalidOperationException($"Anthropic response did not match expected format - field {nameof(anthropicContent)} from {nameof(result)}"); 
+
+                    var anthropicText = anthropicContent[0].Text;
+                    if(string.IsNullOrWhiteSpace(anthropicText))
+                        throw new InvalidOperationException($"Anthropic response did not match expected format - field {nameof(anthropicText)} from {nameof(result)}");
+                        
+                    Console.WriteLine(anthropicText);
+                    break;
+                } else {
+                    throw new InvalidOperationException("Failed to cast.");
+                }
 
         }
     }

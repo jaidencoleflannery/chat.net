@@ -4,6 +4,8 @@ using System.Net.Http.Json;
 using chat.net.Configurations;
 using chat.net.Models;
 
+using static chat.net.Models.Configuration.ConfigurationAttributes;
+
 namespace chat.net.Conversations;
 
 public static class ConversationService {
@@ -17,17 +19,17 @@ public static class ConversationService {
     };
 
     public static async Task<ResponseDto> Call(string input, string? PreviousResponseId) { 
-        var providerString = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Provider)!;
+        var providerString = ConfigurationService.GetValue(Provider)!;
         if(string.IsNullOrWhiteSpace(providerString))
             throw new InvalidOperationException("Could not pull value for provider from config.");
         if(!Enum.TryParse<Providers>(providerString, true, out var provider))
             throw new InvalidOperationException("Could not verify provider value pulled from config.");
 
-        var model = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Model)!;
+        var model = ConfigurationService.GetValue(Model)!;
         if(model == null)
             throw new InvalidOperationException("Could not pull value for model from config.");
 
-        var key = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Key);
+        var key = ConfigurationService.GetValue(Key);
         if(key == null)
             throw new InvalidOperationException("Failed to get key from config. Set your API key for your desired model with 'ask --config --set-key <key>'");
 
@@ -50,7 +52,14 @@ public static class ConversationService {
             "application/json"
         );
 
-        return await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request, input, model, previousResponseId);
+
+        AiResponseDto? body = await response.Content.ReadFromJsonAsync<OpenAiResponseDto>();
+        if(body == null)
+            throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
+
+        body.Provider = Providers.Openai;
+        return body;    
     }
 
     public static async Task<ResponseDto> AnthropicCall(string input, string model, string? previousResponseId, string key) {
@@ -75,37 +84,62 @@ public static class ConversationService {
             "application/json"
         );
 
-        return await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request, input, model, previousResponseId);
+
+        AiResponseDto? body = await response.Content.ReadFromJsonAsync<AnthropicResponseDto>();
+        if(body == null)
+            throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
+
+        body.Provider = Providers.Anthropic;
+        return body;    
     }
     
     public static async Task<ResponseDto> GoogleCall(string input, string model, string? previousResponseId, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
-        return await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request, input, model, previousResponseId);
+
+        AiResponseDto? body = await response.Content.ReadFromJsonAsync<AiResponseDto>();
+        if(body == null)
+            throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
+
+        body.Provider = Providers.Google;
+        return body;    
     }
 
     public static async Task<ResponseDto> XaiCall(string input, string model, string? previousResponseId, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
-        return await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request, input, model, previousResponseId);
+
+        AiResponseDto? body = await response.Content.ReadFromJsonAsync<AiResponseDto>();
+        if(body == null)
+            throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
+
+        body.Provider = Providers.Xai;
+        return body;    
     }
 
     public static async Task<ResponseDto> DeepseekCall(string input, string model, string? previousResponseId, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
-        return await SendRequest(request, input, model, previousResponseId);
+        var response = await SendRequest(request, input, model, previousResponseId);
+
+        AiResponseDto body = await response.Content.ReadFromJsonAsync<AiResponseDto>();
+        if(body == null)
+            throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
+
+        body.Provider = Providers.Deepseek;
+        return body;
     }
 
-    public static async Task<OpenAiResponseDto> SendRequest(HttpRequestMessage request, string input, string model, string? PreviousResponseId) {  
+    public static async Task<HttpResponseMessage> SendRequest(HttpRequestMessage request, string input, string model, string? PreviousResponseId) {  
 
         using var client = new HttpClient();
         var response = await client.SendAsync(request);
 
-        Console.WriteLine(await response.Content.ReadAsStringAsync());
+        // for debugging - following line will print the entire response
+        // Console.WriteLine(await response.Content.ReadAsStringAsync());
 
         response.EnsureSuccessStatusCode(); 
 
-        var body = await response.Content.ReadFromJsonAsync<OpenAiResponseDto>();
-        if(body == null)
-            throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
-
-        return body;
+        return response;
     }
 }
