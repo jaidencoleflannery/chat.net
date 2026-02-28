@@ -1,4 +1,5 @@
 using chat.net.Models;
+using System.Text;
 
 namespace chat.net.Conversations;
 
@@ -11,7 +12,7 @@ public static class ResponseService {
         if(properties == null)
             throw new InvalidOperationException($"Could not get type or properties from {nameof(properties)}");
 
-        var builder = new System.Text.StringBuilder();
+        var builder = new StringBuilder();
 
         switch (result.Provider) {
             case Providers.Openai:
@@ -38,29 +39,41 @@ public static class ResponseService {
                 }
 
                 if(builder.Length <= 0)
-                    throw new InvalidOperationException("Could not find any text within OpenAi response.");
-                
-                Console.WriteLine($"\n\n[chat.net]:");
-                Console.WriteLine(builder.ToString());
-                Console.WriteLine($"\n");
-                break;
+                    throw new InvalidOperationException("Could not find any text within OpenAi response."); 
+                PrintToConsole(builder); 
+                break; 
 
             case Providers.Anthropic:
-                if(result is AnthropicResponseDto anthropicResult) {
-                    var anthropicContent = anthropicResult.Content;
-                    if(anthropicContent == null || anthropicContent.Length <= 0)
-                        throw new InvalidOperationException($"Anthropic response did not match expected format - field {nameof(anthropicContent)} from {nameof(result)}"); 
+                var anthropicResult = ((AnthropicResponseDto)result);
+                var anthropicContent = anthropicResult.Content;
+                if(anthropicContent == null || anthropicContent.Length <= 0)
+                    throw new InvalidOperationException($"Anthropic response did not match expected format - field {nameof(anthropicContent)} from {nameof(result)}");
+ 
+                for(int i = 0; i < anthropicContent.Length; i++) {
+                    var content = anthropicContent[i];
+                    if(content == null)
+                        continue;
 
-                    var anthropicText = anthropicContent[0].Text;
-                    if(string.IsNullOrWhiteSpace(anthropicText))
-                        throw new InvalidOperationException($"Anthropic response did not match expected format - field {nameof(anthropicText)} from {nameof(result)}");
-                        
-                    Console.WriteLine(anthropicText);
-                    break;
-                } else {
-                    throw new InvalidOperationException("Failed to cast.");
+                    if(!string.Equals(content.Type, "text", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if(!string.IsNullOrWhiteSpace(content.Text)) {
+                        if(builder.Length > 0) 
+                            builder.AppendLine();
+                        builder.Append(content.Text);
+                    } 
                 }
 
+                if(builder.Length <= 0)
+                    throw new InvalidOperationException("Could not find any text within Anthropic response."); 
+                PrintToConsole(builder);
+                break;
+
         }
+    }
+
+    private static void PrintToConsole(StringBuilder builder) {
+        Console.WriteLine($"\n\n[chat.net]:");
+        Console.WriteLine(builder.ToString());
+        Console.WriteLine($"\n");
     }
 }

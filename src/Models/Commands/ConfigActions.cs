@@ -1,6 +1,6 @@
 namespace chat.net.Models;
 
-public record Config(ConfigAction? Action = null, ConfigActionRequiresArgument? ActionArgument = null, string Value = "") : Command; 
+public record Config(ConfigAction? Action = null, ConfigActionRequiresArgument? ActionArgument = null, string Value = "", List<string>? Values = null) : Command; 
 
 public enum ConfigAction {  
     ClearConfig,
@@ -11,5 +11,6 @@ public enum ConfigActionRequiresArgument {
     SetProvider,
     SetKey,
     SetPreviousResponseId,
-    SetInstructions
+    SetInstructions,
+    SetMessageHistory
 }

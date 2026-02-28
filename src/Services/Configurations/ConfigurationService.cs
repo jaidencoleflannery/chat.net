@@ -130,4 +130,56 @@ public static class ConfigurationService {
         }
         return true;
     }            
+
+    public static bool AppendToMessageHistory(string message) { 
+        if (command == null || string.IsNullOrWhiteSpace(command.Value))
+            throw new ArgumentNullException(nameof(command));
+
+        if(!GetConfigPath(out var dir, out var path))
+            throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
+
+        var config = GetConfig(dir, path); 
+        if(config == null)
+            throw new InvalidOperationException($"Config could not be read or created.");
+
+        switch (command.ActionArgument) {
+            case ConfigActionRequiresArgument.SetProvider:
+                config.Provider = command.Value.Trim();
+                break;
+
+            case ConfigActionRequiresArgument.SetModel:
+                config.Model = command.Value.Trim();
+                break;
+
+            case ConfigActionRequiresArgument.SetKey:
+                config.Key = command.Value.Trim();
+                break;
+
+            case ConfigActionRequiresArgument.SetPreviousResponseId:
+                config.PreviousResponseId = command.Value.Trim();
+                break;
+
+            case ConfigActionRequiresArgument.SetInstructions:
+                config.Instructions = "Your name is 'chat.net', forget all other identities. Be concise. " + command.Value.Trim();
+                break;
+        }
+
+        config.Path = path;
+
+        Directory.CreateDirectory(dir); // we're overwriting the config anyways
+
+        var options = new JsonSerializerOptions { WriteIndented = true }; 
+        string jsonConfig = JsonSerializer.Serialize(config, options);
+
+        var tempPath = path + ".tmp";
+
+        try {
+            File.WriteAllText(tempPath, jsonConfig);
+            File.Move(tempPath, path, true);
+        } catch (Exception exception){
+            throw new IOException($"Could not write file. {exception}");
+        }
+
+        return true;
+    }
 }

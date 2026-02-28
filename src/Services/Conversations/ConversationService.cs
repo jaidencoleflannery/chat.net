@@ -81,6 +81,7 @@ public static class ConversationService {
         var json = JsonSerializer.Serialize(new {
             model = model,
             max_tokens = 1000, // need to make this configurable
+            system = instructions,
             messages = new[] {
                 new { 
                     role = "user",

@@ -25,12 +25,20 @@ public class Program {
 
             Config? configUpdate;
             if(result is AiResponseDto response) {
+                // store the newest id as PreviousResponseId
                 configUpdate = new Config() { 
                     ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, 
                     Value = response.Id ?? "empty"
                 };
                 ConfigurationService.SetValue(configUpdate);
-            }
+                
+                // append message with id as key to MessageHistory
+                var messageHistoryUpdate = new Config() {
+                    ActionArgument = ConfigActionRequiresArgument.SetMessageHistory,
+                    Value = message
+                }
+                ConfigurationService.AppendToMessageHistory(messageHistory);
+            } 
 
             // push response to user
             if(result is AiResponseDto ai)

@@ -7,6 +7,7 @@ public class Configuration {
     public string Key { get; set; } = String.Empty;
     public string PreviousResponseId { get; set; } = String.Empty;
     public string Instructions { get; set; } = String.Empty;
+    public List<string> MessageHistory { get; set; } = new List<string>();
 
     public enum ConfigurationAttributes {
         Path,
@@ -14,6 +15,7 @@ public class Configuration {
         Provider,
         Key,
         PreviousResponseId,
-        Instructions
+        Instructions,
+        MessageHistory
     }
 }

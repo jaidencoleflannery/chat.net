@@ -3,10 +3,7 @@ using System.Text.Json.Serialization;
 namespace chat.net.Models;
 
 public class AnthropicResponseDto : AiResponseDto {
-    public AnthropicResponseDto (bool isSuccessful, Providers provider) : base(isSuccessful, provider) { }
-    
-    [JsonPropertyName("id")]
-    public string Id { get; init; } = string.Empty;
+    public AnthropicResponseDto (bool isSuccessful, Providers provider) : base(isSuccessful, provider) { } 
 
     [JsonPropertyName("type")]
     public string? Type { get; init; } = string.Empty;
