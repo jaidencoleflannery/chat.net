@@ -25,12 +25,10 @@ public class Program {
 
             Config? configUpdate;
             if(result is AiResponseDto response) {
-                Console.WriteLine(result);
                 configUpdate = new Config() { 
                     ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, 
                     Value = response.Id ?? "empty"
                 };
-                Console.WriteLine(configUpdate);
                 ConfigurationService.SetValue(configUpdate);
             }
 

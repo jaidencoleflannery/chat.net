@@ -70,6 +70,10 @@ public static class ConfigurationService {
             case ConfigActionRequiresArgument.SetPreviousResponseId:
                 config.PreviousResponseId = command.Value.Trim();
                 break;
+
+            case ConfigActionRequiresArgument.SetInstructions:
+                config.Instructions = "Your name is 'chat.net', forget all other identities. Be concise. " + command.Value.Trim();
+                break;
         }
 
         config.Path = path;

@@ -10,12 +10,12 @@ namespace chat.net.Conversations;
 
 public static class ConversationService {
  
-    static Dictionary<Providers, Func<string, string, string?, string, Task<ResponseDto>>> map = new() {
-        [Providers.Openai] = (input, model, previousResponseId, key) => OpenAiCall(input, model, previousResponseId, key),
-        [Providers.Anthropic] = (input, model, previousResponseId, key) => AnthropicCall(input, model, previousResponseId, key),
-        [Providers.Google] = (input, model, previousResponseId, key) => GoogleCall(input, model, previousResponseId, key),
-        [Providers.Xai] = (input, model, previousResponseId, key) => XaiCall(input, model, previousResponseId, key),
-        [Providers.Deepseek] = (input, model, previousResponseId, key) => DeepseekCall(input, model, previousResponseId, key),
+    static Dictionary<Providers, Func<string, string, string?, string, string, Task<ResponseDto>>> map = new() {
+        [Providers.Openai] = (input, model, previousResponseId, instructions, key) => OpenAiCall(input, model, previousResponseId, instructions, key),
+        [Providers.Anthropic] = (input, model, previousResponseId, instructions, key) => AnthropicCall(input, model, previousResponseId, instructions, key),
+        [Providers.Google] = (input, model, previousResponseId, instructions, key) => GoogleCall(input, model, previousResponseId, instructions, key),
+        [Providers.Xai] = (input, model, previousResponseId, instructions, key) => XaiCall(input, model, previousResponseId, instructions, key),
+        [Providers.Deepseek] = (input, model, previousResponseId, instructions, key) => DeepseekCall(input, model, previousResponseId, instructions, key),
     };
 
     public static async Task<ResponseDto> Call(string input, string? previousResponseId) { 
@@ -33,10 +33,14 @@ public static class ConversationService {
         if(key == null)
             throw new InvalidOperationException("Failed to get key from config. Set your API key for your desired model with 'ask --config --set-key <key>'");  
 
-        return await map[provider](input, model, previousResponseId, key);
+        var instructions = ConfigurationService.GetValue(Instructions);
+        if(instructions == null)
+            throw new InvalidOperationException("Failed to get instructions from config.");
+
+        return await map[provider](input, model, previousResponseId, instructions, key);
     }
 
-    public static async Task<ResponseDto> OpenAiCall(string input, string model, string? previousResponseId, string key) {
+    public static async Task<ResponseDto> OpenAiCall(string input, string model, string? previousResponseId, string instructions, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
         request.Headers.Add("Authorization", $"Bearer {key}");
 
@@ -48,7 +52,8 @@ public static class ConversationService {
         var json = JsonSerializer.Serialize(new {
             model = model,
             input = input,
-            previous_response_id = conversationId
+            previous_response_id = conversationId,
+            instructions = instructions
         });
 
         request.Content = new StringContent(
@@ -68,7 +73,7 @@ public static class ConversationService {
         return body; 
     }
 
-    public static async Task<ResponseDto> AnthropicCall(string input, string model, string? previousResponseId, string key) {
+    public static async Task<ResponseDto> AnthropicCall(string input, string model, string? previousResponseId, string instructions, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
         request.Headers.Add("x-api-key", key);
         request.Headers.Add("anthropic-version", "2023-06-01");
@@ -104,7 +109,7 @@ public static class ConversationService {
         return body;    
     }
     
-    public static async Task<ResponseDto> GoogleCall(string input, string model, string? previousResponseId, string key) {
+    public static async Task<ResponseDto> GoogleCall(string input, string model, string? previousResponseId, string instructions, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
         var response = await SendRequest(request);
 
@@ -116,7 +121,7 @@ public static class ConversationService {
         return body;    
     }
 
-    public static async Task<ResponseDto> XaiCall(string input, string model, string? previousResponseId, string key) {
+    public static async Task<ResponseDto> XaiCall(string input, string model, string? previousResponseId, string instructions, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
         var response = await SendRequest(request);
 
@@ -128,7 +133,7 @@ public static class ConversationService {
         return body;    
     }
 
-    public static async Task<ResponseDto> DeepseekCall(string input, string model, string? previousResponseId, string key) {
+    public static async Task<ResponseDto> DeepseekCall(string input, string model, string? previousResponseId, string instructions, string key) {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
         var response = await SendRequest(request);
 

@@ -10,5 +10,6 @@ public enum ConfigActionRequiresArgument {
     SetModel,
     SetProvider,
     SetKey,
-    SetPreviousResponseId
+    SetPreviousResponseId,
+    SetInstructions
 }

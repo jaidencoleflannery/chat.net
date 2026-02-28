@@ -98,6 +98,9 @@ public static class CommandValidationService {
                 // model can be anything (user's input is expected to match the endpoints expected value for model)
                 case ConfigActionRequiresArgument.SetModel:
                     return new Config(ActionArgument: actionWithArgument, Value: arg);
+                
+                case ConfigActionRequiresArgument.SetInstructions:
+                    return new Config(ActionArgument: actionWithArgument, Value: arg);
 
                 default:
                     throw new ArgumentException("Config argument not recognized.", nameof(configCommand));

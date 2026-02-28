@@ -12,11 +12,11 @@ public static class CommandService {
     static Dictionary<Type, Func<Command, string?, Task<ResponseDto>>> map = new() {
         [typeof(Config)] = (cmd, previousResponseId) => ExecuteConfigCommand((Config)cmd, previousResponseId),
         [typeof(Input)] = async (cmd, previousResponseId) => await ExecuteInputCommand((Input)cmd, previousResponseId),
-        [typeof(Clear)] = (cmd, previousResponseId) => ExecuteClearCommand((Clear)cmd, previousResponseId)
+        [typeof(Clear)] = (cmd, previousResponseId) => ExecuteClearCommand((Clear)cmd, previousResponseId),
     };
 
     public static async Task<ResponseDto> Execute(Command command, string? previousResponseId) {
-        if(command == null) 
+        if(command == null)
             throw new Exception("Execute failure, command is null.");
         // Map contains all of our functions, keyed by type
         return await map[command.GetType()](command, previousResponseId);
@@ -36,6 +36,7 @@ public static class CommandService {
                 case SetModel:
                 case SetProvider: 
                 case SetKey:
+                case SetInstructions:
                     return new ResponseDto(ConfigurationService.SetValue(command));
                 default:
                     throw new ArgumentException($"Configuration action with argument {command.ActionArgument} not recognized.", nameof(command.ActionArgument));

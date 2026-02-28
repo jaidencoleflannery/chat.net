@@ -39,8 +39,10 @@ public static class ResponseService {
 
                 if(builder.Length <= 0)
                     throw new InvalidOperationException("Could not find any text within OpenAi response.");
-
+                
+                Console.WriteLine($"\n\n[chat.net]:");
                 Console.WriteLine(builder.ToString());
+                Console.WriteLine($"\n");
                 break;
 
             case Providers.Anthropic:

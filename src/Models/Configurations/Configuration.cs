@@ -6,12 +6,14 @@ public class Configuration {
     public string Provider { get; set; } = String.Empty;
     public string Key { get; set; } = String.Empty;
     public string PreviousResponseId { get; set; } = String.Empty;
+    public string Instructions { get; set; } = String.Empty;
 
     public enum ConfigurationAttributes {
         Path,
         Model,
         Provider,
         Key,
-        PreviousResponseId
+        PreviousResponseId,
+        Instructions
     }
 }
