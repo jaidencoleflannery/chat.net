@@ -23,6 +23,17 @@ public class Program {
             // execute the command
             ResponseDto result = await CommandService.Execute(command, previousResponseId);
 
+            Config? configUpdate;
+            if(result is AiResponseDto response) {
+                Console.WriteLine(result);
+                configUpdate = new Config() { 
+                    ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, 
+                    Value = response.Id ?? "empty"
+                };
+                Console.WriteLine(configUpdate);
+                ConfigurationService.SetValue(configUpdate);
+            }
+
             // push response to user
             if(result is AiResponseDto ai)
                 ResponseService.Print(ai);

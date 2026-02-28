@@ -63,13 +63,7 @@ public static class ConversationService {
         if(body == null)
             throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
 
-        body.Provider = Providers.Openai;
-
-        Config? configUpdate = new Config() { 
-            ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, 
-            Value = body.Id ?? "empty"
-        };
-        ConfigurationService.SetValue(configUpdate);
+        body.Provider = Providers.Openai; 
 
         return body; 
     }
