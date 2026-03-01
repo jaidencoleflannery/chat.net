@@ -1,3 +1,3 @@
 namespace chat.net.Models;
 
-public record Help : Command;
+public record HelpCommand : Command;

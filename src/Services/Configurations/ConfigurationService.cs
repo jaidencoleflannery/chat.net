@@ -8,16 +8,18 @@ public static class ConfigurationService {
     public static string GetValue(Configuration.ConfigurationAttributes field) {
         if(!GetConfigPath(out var dir, out var path))
             throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
-
+        
+        // this is enefficient, but our configuration is relatively tiny
+        // if the configuration grows, replace this with a more efficient implementation
         var config = GetConfig(dir, path); 
         if(config == null)
             throw new InvalidOperationException($"Config could not be read or created.");
 
-        var type = config.GetType();
+        var type = config.GetType(); // will only throw if config is null
 
         var property = type.GetProperty(field.ToString());
         if(property == null)
-            throw new InvalidOperationException($"Property from {type} was null.");
+            throw new InvalidOperationException($"Property {field} from {type} was null.");
 
         var response = property.GetValue(config) as string;
         if(response == null)
@@ -29,13 +31,10 @@ public static class ConfigurationService {
     public static Configuration GetConfig(string dir, string path) { 
         Configuration? config;
         if(File.Exists(path)){
-            try {
-                string json = File.ReadAllText(path);
-                config = JsonSerializer.Deserialize<Configuration>(json)
-                    ?? new Configuration() { Path = path };
-            } catch (Exception) {
-                config = new Configuration() { Path = path };
-            }
+            // if this throws, let it bubble
+            string json = File.ReadAllText(path);
+            config = JsonSerializer.Deserialize<Configuration>(json)
+                ?? new Configuration() { Path = path };
         } else {
             config = new Configuration() { Path = path }; 
         }
@@ -43,9 +42,9 @@ public static class ConfigurationService {
         return config;
     }
 
-    public static bool SetValue(Config command) { 
-        if (command == null || string.IsNullOrWhiteSpace(command.Value))
-            throw new ArgumentNullException(nameof(command));
+    public static void SetValue(ConfigCommand command) { 
+        if (command == null || string.IsNullOrWhiteSpace(command.Value) || command.ActionArgument == null)
+            throw new ArgumentException($"{nameof(command)} invalid.", nameof(command));
 
         if(!GetConfigPath(out var dir, out var path))
             throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
@@ -54,45 +53,31 @@ public static class ConfigurationService {
         if(config == null)
             throw new InvalidOperationException($"Config could not be read or created.");
 
-        switch (command.ActionArgument) {
-            case ConfigActionRequiresArgument.SetProvider:
-                config.Provider = command.Value.Trim();
-                break;
-
-            case ConfigActionRequiresArgument.SetModel:
-                config.Model = command.Value.Trim();
-                break;
-
-            case ConfigActionRequiresArgument.SetKey:
-                config.Key = command.Value.Trim();
-                break;
-
-            case ConfigActionRequiresArgument.SetPreviousResponseId:
-                config.PreviousResponseId = command.Value.Trim();
-                break;
-
-            case ConfigActionRequiresArgument.SetInstructions:
-                config.Instructions = "Your name is 'chat.net', forget all other identities. Be concise. " + command.Value.Trim();
-                break;
-        }
+        // match actionargument to a configuration attribute and then push the command.Value onto that field
+        var actionArgument = command.ActionArgument.Value.ToString();
+        actionArgument = actionArgument.AsSpan(3).ToString(); // strip the "Set" from the beginning of the string so it matches the config attribute name
+        Console.WriteLine($"Setting config value. Stripped ActionArgument became: {actionArgument}");
+        var type = config.GetType();
+        var prop = type.GetProperty(actionArgument);
+        if(prop == null)
+            throw new InvalidOperationException($"Failed to reflect {nameof(command)} and edit config.");
+        prop.SetValue(config, command.Value.Trim()); 
 
         config.Path = path;
-
+        var tempPath = path + ".tmp";
+        
         Directory.CreateDirectory(dir); // we're overwriting the config anyways
 
         var options = new JsonSerializerOptions { WriteIndented = true }; 
         string jsonConfig = JsonSerializer.Serialize(config, options);
-
-        var tempPath = path + ".tmp";
-
+ 
+        // atomic write
         try {
             File.WriteAllText(tempPath, jsonConfig);
             File.Move(tempPath, path, true);
         } catch (Exception exception){
-            throw new IOException($"Could not write file. {exception}");
+            throw new IOException($"Could not write file.", exception);
         }
-
-        return true;
     }
 
     public static bool ClearConfig() { 

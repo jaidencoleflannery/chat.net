@@ -4,7 +4,7 @@ public record Input : Command{
     public string Text => _text;
     private string _text;
 
-   public Input(string input) {
+   public InputCommand(string input) {
        _text = input;
    }
 }

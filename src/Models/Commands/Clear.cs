@@ -1,3 +1,3 @@
 namespace chat.net.Models;
 
-public record Clear : Command;
+public record ClearCommand : Command;

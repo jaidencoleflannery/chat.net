@@ -10,19 +10,20 @@ namespace chat.net.Commands;
 public static class CommandService {
 
     static Dictionary<Type, Func<Command, string?, Task<ResponseDto>>> map = new() {
-        [typeof(Config)] = (cmd, previousResponseId) => ExecuteConfigCommand((Config)cmd, previousResponseId),
-        [typeof(Input)] = async (cmd, previousResponseId) => await ExecuteInputCommand((Input)cmd, previousResponseId),
-        [typeof(Clear)] = (cmd, previousResponseId) => ExecuteClearCommand((Clear)cmd, previousResponseId),
+        [typeof(ConfigCommand)] = (cmd, previousResponseId) => ExecuteConfigCommand((ConfigCommand)cmd, previousResponseId),
+        [typeof(InputCommand)] = async (cmd, previousResponseId) => await ExecuteInputCommand((InputCommand)cmd, previousResponseId),
+        [typeof(ClearCommand)] = (cmd, previousResponseId) => ExecuteClearCommand((ClearCommand)cmd, previousResponseId),
+        [typeof(HelpCommand)] = (cmd, previousResponseId) => ExecuteHelpCommand((HelpCommand)cmd, previousResponseId),
     };
 
     public static async Task<ResponseDto> Execute(Command command, string? previousResponseId) {
         if(command == null)
-            throw new Exception("Execute failure, command is null.");
+            throw new ArgumentNullException(nameof(command));
         // Map contains all of our functions, keyed by type
         return await map[command.GetType()](command, previousResponseId);
     }
 
-    public static async Task<ResponseDto> ExecuteConfigCommand(Config command, string? previousResponseId) {
+    public static async Task<ResponseDto> ExecuteConfigCommand(ConfigCommand command, string? previousResponseId) {
         // Command can XOR contain: Action (no argument(s)) or ActionArgument (with argument(s))
         if(command.Action != null)
             switch(command.Action) { 
@@ -45,15 +46,16 @@ public static class CommandService {
             throw new ArgumentNullException($"{nameof(command.Action)} and {nameof(command.ActionArgument)}");
         }
 
-    public static async Task<ResponseDto> ExecuteInputCommand(Input command, string? previousResponseId) =>
+    public static async Task<ResponseDto> ExecuteInputCommand(InputCommand command, string? previousResponseId) =>
         await ConversationService.Call(command.Text, previousResponseId);
 
     public static Task<ResponseDto> ExecuteClearCommand(Command command, string? previousResponseId) {
-        Config? configUpdate = new Config() { ActionArgument = SetPreviousResponseId, Value = "empty" };
-        return Task.FromResult( new ResponseDto(ConfigurationService.SetValue(configUpdate)));
+        ConfigCommand? configUpdate = new ConfigCommand() { ActionArgument = SetPreviousResponseId, Value = "empty" };
+        return Task.FromResult(new ResponseDto(ConfigurationService.SetValue(configUpdate)));
     }
 
     public static Task<ResponseDto> ExecuteHelpCommand(Command command, string? previousResponseId) {
-        return Task.FromResult( new ResponseDto(ConfigurationService.SetValue(configUpdate)));
+        ConfigCommand? configUpdate = new ConfigCommand() { ActionArgument = SetPreviousResponseId, Value = "empty" };
+        return Task.FromResult(new ResponseDto(ConfigurationService.SetValue(configUpdate)));
     }
 }

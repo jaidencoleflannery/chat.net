@@ -29,32 +29,34 @@ public static class CommandValidationService {
                 break; 
 
             case CommandAction.Clear:
-                command = new Clear();
+                command = new ClearCommand();
                 break;
 
             case CommandAction.Help:
-                command = new Help();
+                command = new HelpCommand();
                 break;
 
             // if no command is found, we assume it is the message - return it as Input
             case CommandAction.Input:
-                command = new Input(commands[0]);
+                command = new InputCommand(commands[0]);
                 break;
 
             default:
-                throw new ArgumentException("Command found but not configured.");
-
+                throw new ArgumentException(
+                        "Command found but not configured. Add your command to the CommandAction enum and CommandValidation switch map  for it to be properly routed.");
         };
         
         return command;
     } 
 
+    // figure out what type of command the first command is
     private static CommandAction GetCommandType(string command) {
         if(string.IsNullOrWhiteSpace(command))
             throw new ArgumentException($"Argument type could not be found, argument is null or empty.", nameof(command));
-        
+
         var input = FormatCommand(command); 
-        // if command is in commandactions, return that, else it is input for the bot
+
+        // if command is in commandactions, return that, else it is input for the chat
         return (Enum.TryParse<CommandAction>(input, true, out var action)) 
             ? action
             : CommandAction.Input;
@@ -73,7 +75,7 @@ public static class CommandValidationService {
 
         // if(enum requires no arguments) else if(it does require arguments) else throw
         if(Enum.TryParse<ConfigAction>(configCommand, true, out var action)) {
-            return new Config(action);
+            return new ConfigCommand(action);
         } else if(Enum.TryParse<ConfigActionRequiresArgument>(configCommand, true, out var actionWithArgument)) {
             if(commands.Length < 3)
                 throw new ArgumentException($"--config {configCommand} expects an argument but no argument was provided.", nameof(commands));
@@ -86,7 +88,7 @@ public static class CommandValidationService {
                 case ConfigActionRequiresArgument.SetProvider:
                     // make sure provided Provider type exists in our enum of valid providers
                     if(Enum.TryParse<Providers>(arg, true, out var result)) {
-                        return new Config(ActionArgument: actionWithArgument, Value: arg);
+                        return new ConfigCommand(ActionArgument: actionWithArgument, Value: arg);
                     } else {
                         // build an error response that contains valid input options
                         StringBuilder builder = new();
@@ -97,14 +99,14 @@ public static class CommandValidationService {
                     }
 
                 case ConfigActionRequiresArgument.SetKey:
-                    return new Config(ActionArgument: actionWithArgument, Value: arg); 
+                    return new ConfigCommand(ActionArgument: actionWithArgument, Value: arg); 
 
-                // model can be anything (user's input is expected to match the endpoints expected value for model)
+                // model can be anything (user's input is expected to match the api endpoint's expected value for model)
                 case ConfigActionRequiresArgument.SetModel:
-                    return new Config(ActionArgument: actionWithArgument, Value: arg);
+                    return new ConfigCommand(ActionArgument: actionWithArgument, Value: arg);
                 
                 case ConfigActionRequiresArgument.SetInstructions:
-                    return new Config(ActionArgument: actionWithArgument, Value: arg);
+                    return new ConfigCommand(ActionArgument: actionWithArgument, Value: arg);
 
                 default:
                     throw new ArgumentException("Config argument not recognized.", nameof(configCommand));
