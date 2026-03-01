@@ -1,6 +1,6 @@
 namespace chat.net.Models;
 
-public record Input : Command{ 
+public record InputCommand : Command{ 
     public string Text => _text;
     private string _text;
 

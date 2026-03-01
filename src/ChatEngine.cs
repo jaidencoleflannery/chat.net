@@ -21,28 +21,11 @@ public class Program {
             var previousResponseId = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.PreviousResponseId);
             
             // execute the command
-            ResponseDto result = await CommandService.Execute(command, previousResponseId);
-
-            Config? configUpdate;
-            if(result is AiResponseDto response) {
-                // store the newest id as PreviousResponseId
-                configUpdate = new Config() { 
-                    ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, 
-                    Value = response.Id ?? "empty"
-                };
-                ConfigurationService.SetValue(configUpdate);
-                
-                // append message with id as key to MessageHistory
-                var messageHistoryUpdate = new Config() {
-                    ActionArgument = ConfigActionRequiresArgument.SetMessageHistory,
-                    Value = message
-                }
-                ConfigurationService.AppendToMessageHistory(messageHistory);
-            } 
+            ResponseDto result = await CommandService.Execute(command, previousResponseId); 
 
             // push response to user
             if(result is AiResponseDto ai)
-                ResponseService.Print(ai);
+                ResponseService.PrintResult(ai);
 
         } catch (Exception exception) {
             Console.WriteLine($"Exception encountered: {exception}");

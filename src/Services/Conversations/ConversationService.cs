@@ -103,7 +103,7 @@ public static class ConversationService {
             throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
 
         var id = body.Id;
-        Config configConversationUpdate = new() { ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, Value = id };
+        ConfigCommand configConversationUpdate = new() { ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, Value = id };
         ConfigurationService.SetValue(configConversationUpdate);
 
         body.Provider = Providers.Anthropic;

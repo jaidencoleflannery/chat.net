@@ -42,7 +42,7 @@ public static class ConfigurationService {
         return config;
     }
 
-    public static void SetValue(ConfigCommand command) { 
+    public static bool SetValue(ConfigCommand command) { 
         if (command == null || string.IsNullOrWhiteSpace(command.Value) || command.ActionArgument == null)
             throw new ArgumentException($"{nameof(command)} invalid.", nameof(command));
 
@@ -56,7 +56,6 @@ public static class ConfigurationService {
         // match actionargument to a configuration attribute and then push the command.Value onto that field
         var actionArgument = command.ActionArgument.Value.ToString();
         actionArgument = actionArgument.AsSpan(3).ToString(); // strip the "Set" from the beginning of the string so it matches the config attribute name
-        Console.WriteLine($"Setting config value. Stripped ActionArgument became: {actionArgument}");
         var type = config.GetType();
         var prop = type.GetProperty(actionArgument);
         if(prop == null)
@@ -64,20 +63,9 @@ public static class ConfigurationService {
         prop.SetValue(config, command.Value.Trim()); 
 
         config.Path = path;
-        var tempPath = path + ".tmp";
-        
-        Directory.CreateDirectory(dir); // we're overwriting the config anyways
+        WriteConfig(config, dir, path);
 
-        var options = new JsonSerializerOptions { WriteIndented = true }; 
-        string jsonConfig = JsonSerializer.Serialize(config, options);
- 
-        // atomic write
-        try {
-            File.WriteAllText(tempPath, jsonConfig);
-            File.Move(tempPath, path, true);
-        } catch (Exception exception){
-            throw new IOException($"Could not write file.", exception);
-        }
+        return true;
     }
 
     public static bool ClearConfig() { 
@@ -117,8 +105,8 @@ public static class ConfigurationService {
     }            
 
     public static bool AppendToMessageHistory(string message) { 
-        if (command == null || string.IsNullOrWhiteSpace(command.Value))
-            throw new ArgumentNullException(nameof(command));
+        if (string.IsNullOrWhiteSpace(message))
+            throw new ArgumentNullException(nameof(message));
 
         if(!GetConfigPath(out var dir, out var path))
             throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
@@ -127,44 +115,27 @@ public static class ConfigurationService {
         if(config == null)
             throw new InvalidOperationException($"Config could not be read or created.");
 
-        switch (command.ActionArgument) {
-            case ConfigActionRequiresArgument.SetProvider:
-                config.Provider = command.Value.Trim();
-                break;
+        config.MessageHistory.Add(message); 
+        WriteConfig(config, dir, path); 
 
-            case ConfigActionRequiresArgument.SetModel:
-                config.Model = command.Value.Trim();
-                break;
+        return true;
+    }
 
-            case ConfigActionRequiresArgument.SetKey:
-                config.Key = command.Value.Trim();
-                break;
-
-            case ConfigActionRequiresArgument.SetPreviousResponseId:
-                config.PreviousResponseId = command.Value.Trim();
-                break;
-
-            case ConfigActionRequiresArgument.SetInstructions:
-                config.Instructions = "Your name is 'chat.net', forget all other identities. Be concise. " + command.Value.Trim();
-                break;
-        }
-
+    public static void WriteConfig(Configuration config, string dir, string path) {
         config.Path = path;
-
-        Directory.CreateDirectory(dir); // we're overwriting the config anyways
+        Directory.CreateDirectory(dir); // no-op if dir exists
 
         var options = new JsonSerializerOptions { WriteIndented = true }; 
         string jsonConfig = JsonSerializer.Serialize(config, options);
 
         var tempPath = path + ".tmp";
-
+        
+        // atomic write
         try {
             File.WriteAllText(tempPath, jsonConfig);
             File.Move(tempPath, path, true);
         } catch (Exception exception){
-            throw new IOException($"Could not write file. {exception}");
+            throw new IOException("Could not write file.", exception);
         }
-
-        return true;
     }
 }
