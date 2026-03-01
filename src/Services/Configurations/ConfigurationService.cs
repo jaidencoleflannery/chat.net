@@ -5,7 +5,7 @@ namespace chat.net.Configurations;
 
 public static class ConfigurationService {
 
-    public static string GetValue(Configuration.ConfigurationAttributes field) {
+    public static string GetValue(Configuration.ConfigurationAttributes field, Providers? provider = null) {
         if(!GetConfigPath(out var dir, out var path))
             throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
         
@@ -20,10 +20,23 @@ public static class ConfigurationService {
         var property = type.GetProperty(field.ToString());
         if(property == null)
             throw new InvalidOperationException($"Property {field} from {type} was null.");
+        
+        string response = "";
+        Dictionary<Providers, string> dict;
+        if(property.GetType() == typeof(Dictionary<Providers, string>)) { 
+            if(provider == null)
+                throw new ArgumentNullException(nameof(provider));
 
-        var response = property.GetValue(config) as string;
-        if(response == null)
-            throw new InvalidOperationException($"Property value {config} was null.");
+            var value = property.GetValue(config);
+            if(value == null)
+                throw new InvalidOperationException($"Could not get value of {nameof(property)} from {nameof(config)}.");
+            dict = (Dictionary<Providers, string>)value; 
+            if(dict == null)
+                throw new InvalidOperationException($"Could not convert type of {nameof(value)} from {nameof(property)} to Dictionary.");
+            response = (dict[provider.Value] ?? "") as string;
+        } else {
+            response = ((property.GetValue(config) ?? "") as string)!;
+        }
 
         return response;
     }
@@ -42,7 +55,7 @@ public static class ConfigurationService {
         return config;
     }
 
-    public static bool SetValue(ConfigCommand command) { 
+    public static bool SetValue(ConfigCommand command, Providers? provider = null) { 
         if (command == null || string.IsNullOrWhiteSpace(command.Value) || command.ActionArgument == null)
             throw new ArgumentException($"{nameof(command)} invalid.", nameof(command));
 
@@ -60,7 +73,15 @@ public static class ConfigurationService {
         var prop = type.GetProperty(actionArgument);
         if(prop == null)
             throw new InvalidOperationException($"Failed to reflect {nameof(command)} and edit config.");
-        prop.SetValue(config, command.Value.Trim()); 
+        if(prop == typeof(Dictionary<Providers, string>)) {
+            if(provider == null)
+                throw new ArgumentNullException($"nameof{provider}");
+            var dict = prop.GetValue(config) as Dictionary<Providers, string> ?? new Dictionary<Providers, string>();
+            dict[provider.Value] = command.Value.Trim();
+            prop.SetValue(config, dict);
+        } else {
+            prop.SetValue(config, command.Value.Trim()); 
+        }
 
         config.Path = path;
         WriteConfig(config, dir, path);
@@ -104,7 +125,7 @@ public static class ConfigurationService {
         return true;
     }            
 
-    public static bool AppendToMessageHistory(string message) { 
+    public static bool AppendToMessageHistory(string message, Providers provider) { 
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentNullException(nameof(message));
 
@@ -115,7 +136,11 @@ public static class ConfigurationService {
         if(config == null)
             throw new InvalidOperationException($"Config could not be read or created.");
 
-        config.MessageHistory.Add(message); 
+        config.MessageHistory ??= new Dictionary<Providers, List<String>>();
+        if(!config.MessageHistory.ContainsKey(provider)) 
+            config.MessageHistory[provider] = new List<string>();
+        config.MessageHistory[provider].Add(message.Trim());
+
         WriteConfig(config, dir, path); 
 
         return true;

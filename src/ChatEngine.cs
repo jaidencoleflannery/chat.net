@@ -18,7 +18,13 @@ public class Program {
                 throw new InvalidOperationException("Unexpected error validating command.");
  
             // if null, new conversation
-            var previousResponseId = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.PreviousResponseId);
+            var provider = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Provider, null);
+            var previousResponseId = ConfigurationService.GetValue(
+                    Configuration.ConfigurationAttributes.PreviousResponseId, 
+                    (Enum.TryParse<Providers>(provider, out var responseId)) 
+                        ? responseId
+                        : null
+                    );
             
             // execute the command
             ResponseDto result = await CommandService.Execute(command, previousResponseId); 
