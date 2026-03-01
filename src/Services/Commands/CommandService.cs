@@ -52,4 +52,8 @@ public static class CommandService {
         Config? configUpdate = new Config() { ActionArgument = SetPreviousResponseId, Value = "empty" };
         return Task.FromResult( new ResponseDto(ConfigurationService.SetValue(configUpdate)));
     }
+
+    public static Task<ResponseDto> ExecuteHelpCommand(Command command, string? previousResponseId) {
+        return Task.FromResult( new ResponseDto(ConfigurationService.SetValue(configUpdate)));
+    }
 }

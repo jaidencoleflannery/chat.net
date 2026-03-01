@@ -15,7 +15,7 @@ public class Program {
             // validate the input command
             Command? command = CommandValidationService.ValidateCommands(args); 
             if(command == null)
-                return 1;
+                throw new InvalidOperationException("Unexpected error validating command.");
  
             // if null, new conversation
             var previousResponseId = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.PreviousResponseId);

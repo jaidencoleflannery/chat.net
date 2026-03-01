@@ -32,6 +32,10 @@ public static class CommandValidationService {
                 command = new Clear();
                 break;
 
+            case CommandAction.Help:
+                command = new Help();
+                break;
+
             // if no command is found, we assume it is the message - return it as Input
             case CommandAction.Input:
                 command = new Input(commands[0]);

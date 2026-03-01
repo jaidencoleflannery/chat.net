@@ -6,4 +6,5 @@ public enum CommandAction {
     Config,
     Clear,
     Input,
+    Help
 }
