@@ -6,11 +6,10 @@ using chat.net.Models;
 namespace chat.net.Conversations;
 
 public static class ResponseService {
-    public static void PrintResult(AiResponseDto result) {
+    public static void PrintResult(ResponseDto result) {
         if(result == null) 
             throw new ArgumentNullException(nameof(result));
-        
-        var response = ParseResponse(result);
+        var response = ParseResponse((AiResponseDto)result);
         PrintToConsole(response);
     } 
 

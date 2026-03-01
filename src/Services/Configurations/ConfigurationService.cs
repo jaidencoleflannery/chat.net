@@ -5,6 +5,14 @@ namespace chat.net.Configurations;
 
 public static class ConfigurationService {
 
+    // if config exists, leave it alone, otherwise initialize config
+    public static bool Init() {
+        GetConfigPath(out var dir, out var path);
+        Configuration config = GetConfig(dir, path);
+        WriteConfig(config, dir, path);
+        return true;
+    } 
+
     public static string GetValue(Configuration.ConfigurationAttributes field, Providers? provider = null) {
         if(!GetConfigPath(out var dir, out var path))
             throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
@@ -46,8 +54,10 @@ public static class ConfigurationService {
         if(File.Exists(path)){
             // if this throws, let it bubble
             string json = File.ReadAllText(path);
-            config = JsonSerializer.Deserialize<Configuration>(json)
-                ?? new Configuration() { Path = path };
+            if(!string.IsNullOrWhiteSpace(json))
+                config = JsonSerializer.Deserialize<Configuration>(json);
+            else
+                config = new Configuration();
         } else {
             config = new Configuration() { Path = path }; 
         }
@@ -73,9 +83,9 @@ public static class ConfigurationService {
         var prop = type.GetProperty(actionArgument);
         if(prop == null)
             throw new InvalidOperationException($"Failed to reflect {nameof(command)} and edit config.");
-        if(prop == typeof(Dictionary<Providers, string>)) {
+        if(prop.PropertyType == typeof(Dictionary<Providers, string>)) {
             if(provider == null)
-                throw new ArgumentNullException($"nameof{provider}");
+                throw new ArgumentNullException($"{nameof(provider)}");
             var dict = prop.GetValue(config) as Dictionary<Providers, string> ?? new Dictionary<Providers, string>();
             dict[provider.Value] = command.Value.Trim();
             prop.SetValue(config, dict);
@@ -85,6 +95,8 @@ public static class ConfigurationService {
 
         config.Path = path;
         WriteConfig(config, dir, path);
+
+        Console.WriteLine(command.Value.Trim());
 
         return true;
     }

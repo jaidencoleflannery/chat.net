@@ -9,21 +9,21 @@ namespace chat.net.Commands;
 
 public static class CommandService {
 
-    static Dictionary<Type, Func<Command, string?, Task<ResponseDto>>> map = new() {
-        [typeof(ConfigCommand)] = (cmd, previousResponseId) => ExecuteConfigCommand((ConfigCommand)cmd, previousResponseId),
-        [typeof(InputCommand)] = async (cmd, previousResponseId) => await ExecuteInputCommand((InputCommand)cmd, previousResponseId),
-        [typeof(ClearCommand)] = (cmd, previousResponseId) => ExecuteClearCommand((ClearCommand)cmd, previousResponseId),
-        [typeof(HelpCommand)] = (cmd, previousResponseId) => ExecuteHelpCommand((HelpCommand)cmd, previousResponseId),
+    static Dictionary<Type, Func<Command, string?, Providers?, Task<ResponseDto>>> map = new() {
+        [typeof(ConfigCommand)] = (cmd, previousResponseId, provider) => ExecuteConfigCommand((ConfigCommand)cmd, previousResponseId, provider),
+        [typeof(InputCommand)] = async (cmd, previousResponseId, provider) => await ExecuteInputCommand((InputCommand)cmd, previousResponseId, provider),
+        [typeof(ClearCommand)] = (cmd, previousResponseId, provider) => ExecuteClearCommand((ClearCommand)cmd, previousResponseId, provider),
+        [typeof(HelpCommand)] = (cmd, previousResponseId, provider) => ExecuteHelpCommand((HelpCommand)cmd, previousResponseId, provider),
     };
 
-    public static async Task<ResponseDto> Execute(Command command, string? previousResponseId) {
+    public static async Task<ResponseDto> Execute(Command command, string? previousResponseId, Providers? provider) {
         if(command == null)
             throw new ArgumentNullException(nameof(command));
         // Map contains all of our functions, keyed by type
-        return await map[command.GetType()](command, previousResponseId);
+        return await map[command.GetType()](command, previousResponseId, provider);
     }
 
-    public static async Task<ResponseDto> ExecuteConfigCommand(ConfigCommand command, string? previousResponseId) {
+    public static async Task<ResponseDto> ExecuteConfigCommand(ConfigCommand command, string? previousResponseId, Providers? provider) {
         // Command can XOR contain: Action (no argument(s)) or ActionArgument (with argument(s))
         if(command.Action != null)
             switch(command.Action) { 
@@ -46,15 +46,15 @@ public static class CommandService {
             throw new ArgumentNullException($"{nameof(command.Action)} and {nameof(command.ActionArgument)}");
         }
 
-    public static async Task<ResponseDto> ExecuteInputCommand(InputCommand command, string? previousResponseId) =>
+    public static async Task<ResponseDto> ExecuteInputCommand(InputCommand command, string? previousResponseId, Providers? provider) =>
         await ConversationService.Call(command.Text, previousResponseId);
 
-    public static Task<ResponseDto> ExecuteClearCommand(Command command, string? previousResponseId) {
+    public static Task<ResponseDto> ExecuteClearCommand(Command command, string? previousResponseId, Providers? provider) {
         ConfigCommand? configUpdate = new ConfigCommand() { ActionArgument = SetPreviousResponseId, Value = "empty" };
         return Task.FromResult(new ResponseDto(ConfigurationService.SetValue(configUpdate)));
     }
 
-    public static Task<ResponseDto> ExecuteHelpCommand(Command command, string? previousResponseId) {
+    public static Task<ResponseDto> ExecuteHelpCommand(Command command, string? previousResponseId, Providers? provider) {
         return Task.FromResult(new ResponseDto(ResponseService.PrintHelp()));
 
     }
