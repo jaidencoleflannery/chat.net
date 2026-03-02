@@ -9,7 +9,7 @@ public static class ResponseService {
     public static void PrintResult(ResponseDto result) {
         if(result == null) 
             throw new ArgumentNullException(nameof(result));
-        var response = ParseResponse((AiResponseDto)result);
+        StringBuilder response = ParseResponse(result); 
         PrintToConsole(response);
     } 
 
@@ -21,18 +21,18 @@ public static class ResponseService {
         for(int command = 0; command < commandOptions.Length; command++) {
             if(commandOptions[command] != CommandAction.Input)
                 if(commandOptions[command] != CommandAction.Config) {
-                    builder.Append($"{commandOptions[command]}");
+                    builder.Append($"| {commandOptions[command]}");
                 } else {
-                    builder.Append($"{commandOptions[command]} <argument>");
+                    builder.Append($"| {commandOptions[command]} <argument>");
                     var configOptions = (ConfigAction[])Enum.GetValues(typeof(ConfigAction));
                     var configOptionsArgumentRequired = (ConfigActionRequiresArgument[])Enum.GetValues(typeof(ConfigActionRequiresArgument));
-                    builder.Append("Potential Arguments (no input required):");
+                    builder.Append("| Potential Arguments (no input required):");
                     for(int argument = 0; argument < configOptions.Length; argument++) {
-                        builder.Append($"{configOptions[argument]}");
+                        builder.Append($"| {configOptions[argument]}");
                     }
                     builder.Append("Potential Arguments (input required):");
                     for(int argument = 0; argument < configOptions.Length; argument++) {
-                        builder.Append($"{configOptions[argument]} <input>");
+                        builder.Append($"| {configOptions[argument]} <input>");
                     }
                 }
         }

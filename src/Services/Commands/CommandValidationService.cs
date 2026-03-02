@@ -11,7 +11,7 @@ public static class CommandValidationService {
     /// <param name="commands">An array of strings representing the command, typically the user's input.</param>
     /// <returns>A Command type object that represents the input.</returns>
     
-    public static Command? ValidateCommands(string[] commands) {
+    public static Command ValidateCommands(string[] commands) {
         if(commands.Length <= 0 || string.IsNullOrWhiteSpace(commands[0]))
             throw new ArgumentException($"Arguments expected but no arguments were provided. \nUse -help for a list of commands.", nameof(commands));
 
@@ -42,8 +42,7 @@ public static class CommandValidationService {
                 break;
 
             default:
-                throw new ArgumentException(
-                        "Command found but not configured. Add your command to the CommandAction enum and CommandValidation switch map  for it to be properly routed.");
+                throw new ArgumentException("Command found but not configured. Add your command to the CommandAction enum and CommandValidation switch map  for it to be properly routed.");
         };
         
         return command;
@@ -116,7 +115,7 @@ public static class CommandValidationService {
     }
 
     // convert string into generic format
-    private static string? FormatCommand(string command) {
+    public static string? FormatCommand(string command) {
         if(string.IsNullOrWhiteSpace(command))
             throw new ArgumentException($"Argument {command} could not be formatted, argument is null or empty.", nameof(command));
         // convert the command to match our enum formatting

@@ -1,5 +1,7 @@
+using System.Text;
 using System.Text.Json;
 using chat.net.Models;
+using chat.net.Conversations;
 
 namespace chat.net.Configurations;
 
@@ -62,7 +64,7 @@ public static class ConfigurationService {
             config = new Configuration() { Path = path }; 
         }
 
-        return config;
+        return config!;
     }
 
     public static bool SetValue(ConfigCommand command, Providers? provider = null) { 
@@ -156,6 +158,30 @@ public static class ConfigurationService {
         WriteConfig(config, dir, path); 
 
         return true;
+    }
+
+    public static void ValidateProvider(out Providers? provider) { 
+        provider = null;
+        if(!GetConfigPath(out var dir, out var path))
+            throw new DirectoryNotFoundException("Could not find configuration path - Configuration file not read.");
+
+        var config = GetConfig(dir, path); 
+        if(config == null)
+            throw new InvalidOperationException("Config could not be read.");
+
+        if(!Enum.TryParse<Providers>(config.Provider, true, out var foundProvider)) {
+            StringBuilder builder = new();
+            builder.AppendLine("| Provider is not set, run \"ask --config --set-provider <provider>\" to set your provider.");
+            builder.AppendLine("| Valid providers include:");
+            foreach(var currProvider in Enum.GetValues(typeof(Providers)))
+                builder.AppendLine($"| > {currProvider.ToString()}");
+
+            string errorString = builder.ToString();
+            ResultResponseDto response = new(false, errorString);
+            ResponseService.PrintResult(response);
+
+            throw new InvalidOperationException(errorString);
+        }
     }
 
     public static void WriteConfig(Configuration config, string dir, string path) {

@@ -14,9 +14,10 @@ public class Program {
         try {
             // verify that the configuration file is good to go
             ConfigurationService.Init();
+
             // setup special flag for debugging
             string[] arguments;
-            if(args[0] == "-dev")
+            if(args[0] == "-debug")
                 arguments = args[1..];
             else
                 arguments = args;
@@ -26,13 +27,16 @@ public class Program {
             if(command == null)
                 throw new InvalidOperationException("Unexpected error validating command.");
 
-            var providerString = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.Provider, null);
-            if(!Enum.TryParse<Providers>(providerString, true, out var provider))
-                throw new InvalidOperationException($"Provider ({providerString}) was pulled from config but did not match configured providers.");
- 
+            Providers? provider = null;
+            
+            if(!(arguments.Length > 1) || CommandValidationService.FormatCommand(arguments[0]) != CommandAction.Config.ToString().ToLower() 
+            || CommandValidationService.FormatCommand(arguments[1]) != ConfigActionRequiresArgument.SetProvider.ToString().ToLower()) {
+                ConfigurationService.ValidateProvider(out provider);
+            }
+
             // if null, new conversation 
             var previousResponseId = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.PreviousResponseId, provider);
-            
+
             // execute the command
             ResponseDto result = await CommandService.Execute(command, previousResponseId, provider); 
 
@@ -40,7 +44,7 @@ public class Program {
             ResponseService.PrintResult(result);
 
         } catch (Exception exception) {
-            if(args[0] == "-dev")
+            if(args[0] == "-debug")
                 Console.WriteLine(exception);
             return 1;
         }
