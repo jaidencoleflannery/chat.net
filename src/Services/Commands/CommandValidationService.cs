@@ -1,5 +1,8 @@
 using System.Text;
 using chat.net.Models;
+using chat.net.Configurations;
+
+using static chat.net.Configurations.ConfigurationService;
 
 namespace chat.net.Commands;
 
@@ -85,17 +88,8 @@ public static class CommandValidationService {
             switch (actionWithArgument) {
                 // provider has to match a value from Providers enum 
                 case ConfigActionRequiresArgument.SetProvider:
-                    // make sure provided Provider type exists in our enum of valid providers
-                    if(Enum.TryParse<Providers>(arg, true, out var result)) {
-                        return new ConfigCommand(ActionArgument: actionWithArgument, Value: arg);
-                    } else {
-                        // build an error response that contains valid input options
-                        StringBuilder builder = new();
-                        builder.Append($"Invalid provider. Valid providers include:");
-                        foreach(var provider in Enum.GetValues(typeof(Providers))) 
-                            builder.Append(provider);
-                        throw new ArgumentException(builder.ToString(), nameof(commands));
-                    }
+                    ValidateProvider(out var result, provider: arg);
+                    return new ConfigCommand(ActionArgument: actionWithArgument, Value: arg); 
 
                 case ConfigActionRequiresArgument.SetKey:
                     return new ConfigCommand(ActionArgument: actionWithArgument, Value: arg); 

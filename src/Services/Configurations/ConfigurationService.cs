@@ -39,13 +39,15 @@ public static class ConfigurationService {
 
             var value = property.GetValue(config);
             if(value == null)
-                throw new InvalidOperationException($"Could not get value of {nameof(property)} from {nameof(config)}.");
+                throw new InvalidOperationException($"Value of {property.Name} was null.");
             dict = (Dictionary<Providers, string>)value; 
             if(dict == null)
                 throw new InvalidOperationException($"Could not convert type of {nameof(value)} from {nameof(property)} to Dictionary.");
             response = (dict[provider.Value] ?? "") as string;
         } else {
             response = ((property.GetValue(config) ?? "") as string)!;
+            if(response == null)
+                throw new InvalidOperationException($"Could not get value of {nameof(property)} from {nameof(config)}.");
         }
 
         return response;
@@ -87,7 +89,7 @@ public static class ConfigurationService {
             throw new InvalidOperationException($"Failed to reflect {nameof(command)} and edit config.");
         if(prop.PropertyType == typeof(Dictionary<Providers, string>)) {
             if(provider == null)
-                throw new ArgumentNullException($"{nameof(provider)}");
+                throw new ProviderNotSetException();
             var dict = prop.GetValue(config) as Dictionary<Providers, string> ?? new Dictionary<Providers, string>();
             dict[provider.Value] = command.Value.Trim();
             prop.SetValue(config, dict);
@@ -160,28 +162,24 @@ public static class ConfigurationService {
         return true;
     }
 
-    public static void ValidateProvider(out Providers? provider) { 
-        provider = null;
-        if(!GetConfigPath(out var dir, out var path))
-            throw new DirectoryNotFoundException("Could not find configuration path - Configuration file not read.");
+    public static void ValidateProvider(out Providers? validatedProvider, string? provider = null) { 
+        Configuration? config = null;
+        validatedProvider = null;
+        if(string.IsNullOrWhiteSpace(provider)) {
+            if(!GetConfigPath(out var dir, out var path))
+                throw new DirectoryNotFoundException("Could not find configuration path - Configuration file not read.");
 
-        var config = GetConfig(dir, path); 
-        if(config == null)
-            throw new InvalidOperationException("Config could not be read.");
-
-        if(!Enum.TryParse<Providers>(config.Provider, true, out var foundProvider)) {
-            StringBuilder builder = new();
-            builder.AppendLine("| Provider is not set, run \"ask --config --set-provider <provider>\" to set your provider.");
-            builder.AppendLine("| Valid providers include:");
-            foreach(var currProvider in Enum.GetValues(typeof(Providers)))
-                builder.AppendLine($"| > {currProvider.ToString()}");
-
-            string errorString = builder.ToString();
-            ResultResponseDto response = new(false, errorString);
-            ResponseService.PrintResult(response);
-
-            throw new InvalidOperationException(errorString);
+            if((config = GetConfig(dir, path)) == null)
+                throw new InvalidOperationException("Config could not be read.");
         }
+
+        if (!Enum.TryParse<Providers>(provider, true, out var foundProvider)) {
+            var validProviders = string.Join(Environment.NewLine, Enum.GetNames<Providers>().Select(p => $"| > {p}"));
+            string errorString = $"| Invalid provider - run \"ask --config --set-provider <provider>\" to set your provider.\n" + $"| Valid providers include:\n{validProviders}";
+            throw new InvalidProviderException(errorString);
+        } 
+
+        validatedProvider = foundProvider;
     }
 
     public static void WriteConfig(Configuration config, string dir, string path) {
