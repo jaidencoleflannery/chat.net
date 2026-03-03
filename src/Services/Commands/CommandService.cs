@@ -19,8 +19,8 @@ public static class CommandService {
     // Map contains all of our functions, keyed by type
     public static async Task<ResponseDto> Execute(Command command, string? previousResponseId, Providers? provider) =>
         (command == null)
-            ? throw new ArgumentNullException(nameof(command))
-            : await map[command.GetType()](command, previousResponseId, provider);
+        ? throw new ArgumentNullException(nameof(command))
+        : await map[command.GetType()](command, previousResponseId, provider);
 
     public static async Task<ResponseDto> ExecuteConfigCommand(ConfigCommand command, string? previousResponseId, Providers? provider) {
         // Command can XOR contain: Action (no argument(s)) or ActionArgument (with argument(s))
