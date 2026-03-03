@@ -16,12 +16,11 @@ public static class CommandService {
         [typeof(HelpCommand)] = (cmd, previousResponseId, provider) => ExecuteHelpCommand((HelpCommand)cmd, previousResponseId, provider),
     };
 
-    public static async Task<ResponseDto> Execute(Command command, string? previousResponseId, Providers? provider) {
-        if(command == null)
-            throw new ArgumentNullException(nameof(command));
-        // Map contains all of our functions, keyed by type
-        return await map[command.GetType()](command, previousResponseId, provider);
-    }
+    // Map contains all of our functions, keyed by type
+    public static async Task<ResponseDto> Execute(Command command, string? previousResponseId, Providers? provider) =>
+        (command == null)
+            ? throw new ArgumentNullException(nameof(command))
+            : await map[command.GetType()](command, previousResponseId, provider);
 
     public static async Task<ResponseDto> ExecuteConfigCommand(ConfigCommand command, string? previousResponseId, Providers? provider) {
         // Command can XOR contain: Action (no argument(s)) or ActionArgument (with argument(s))
@@ -49,13 +48,16 @@ public static class CommandService {
     public static async Task<ResponseDto> ExecuteInputCommand(InputCommand command, string? previousResponseId, Providers? provider) =>
         await ConversationService.Call(command.Text, previousResponseId);
 
-    public static Task<ResponseDto> ExecuteClearCommand(Command command, string? previousResponseId, Providers? provider) {
-        ConfigCommand? configUpdate = new ConfigCommand() { ActionArgument = SetPreviousResponseId, Value = "empty" };
-        return Task.FromResult(new ResponseDto(ConfigurationService.SetValue(configUpdate)));
-    }
+    public static Task<ResponseDto> ExecuteClearCommand(Command command, string? previousResponseId, Providers? provider) =>
+        Task.FromResult(
+            new ResponseDto(ConfigurationService.SetValue(
+                new ConfigCommand() {
+                     ActionArgument = SetPreviousResponseId, 
+                     Value = "empty" 
+                }
+            ))
+        );
 
-    public static Task<ResponseDto> ExecuteHelpCommand(Command command, string? previousResponseId, Providers? provider) {
-        return Task.FromResult(new ResponseDto(ResponseService.PrintHelp()));
-
-    }
+    public static Task<ResponseDto> ExecuteHelpCommand(Command command, string? previousResponseId, Providers? provider) =>
+        Task.FromResult(new ResponseDto(ResponseService.PrintHelp()));
 }
