@@ -11,7 +11,7 @@ public static class ResponseParser {
             var result = (AiResponseDto)resultDto; 
             switch(result.Provider) {
                 case Openai:
-                    var openaiResult = ((OpenAiResponseDto)result);
+                    var openaiResult = (OpenAiResponseDto)result;
                     var openaiOutput = openaiResult.Output;
                     if(openaiOutput == null || openaiOutput.Length <= 0)
                         throw new InvalidOperationException($"OpenAi response did not match expected format - field {nameof(openaiOutput)} from {nameof(result)}");
@@ -37,7 +37,7 @@ public static class ResponseParser {
                     break;
      
                 case Anthropic:
-                    var anthropicResult = ((AnthropicResponseDto)result);
+                    var anthropicResult = (AnthropicResponseDto)result;
                     var anthropicContent = anthropicResult.Content;
                     if(anthropicContent == null || anthropicContent.Length <= 0)
                         throw new InvalidOperationException($"Anthropic response did not match expected format - field {nameof(anthropicContent)} from {nameof(result)}");
@@ -66,7 +66,7 @@ public static class ResponseParser {
                     throw new ArgumentException($"No configured provider was found within {nameof(result)}");
             }
         } else if(resultDto is ResultResponseDto resultResponse) {
-            builder.AppendLine(resultResponse.Text);
+            builder.AppendLine(resultResponse.Message);
         }
         return builder;
     }

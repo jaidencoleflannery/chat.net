@@ -5,5 +5,5 @@ public enum Providers {
     Anthropic,
     Google,
     Xai,
-    Deepseek 
+    Deepseek
 }

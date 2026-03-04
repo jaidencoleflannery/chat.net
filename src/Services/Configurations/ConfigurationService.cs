@@ -69,7 +69,7 @@ public static class ConfigurationService {
         return config!;
     }
 
-    public static bool SetValue(ConfigCommand command, Providers? provider = null) { 
+    public static void SetValue(ConfigCommand command, Providers? provider = null) { 
         if (command == null || string.IsNullOrWhiteSpace(command.Value) || command.ActionArgument == null)
             throw new ArgumentException($"{nameof(command)} invalid.", nameof(command));
 
@@ -89,7 +89,7 @@ public static class ConfigurationService {
             throw new InvalidOperationException($"Failed to reflect {nameof(command)} and edit config.");
         if(prop.PropertyType == typeof(Dictionary<Providers, string>)) {
             if(provider == null)
-                throw new ProviderNotSetException();
+                throw new ProviderNotSetException("Provider is invalid or not set.");
             var dict = prop.GetValue(config) as Dictionary<Providers, string> ?? new Dictionary<Providers, string>();
             dict[provider.Value] = command.Value.Trim();
             prop.SetValue(config, dict);
@@ -99,10 +99,6 @@ public static class ConfigurationService {
 
         config.Path = path;
         WriteConfig(config, dir, path);
-
-        Console.WriteLine(command.Value.Trim());
-
-        return true;
     }
 
     public static bool ClearConfig() { 
@@ -164,18 +160,19 @@ public static class ConfigurationService {
 
     public static void ValidateProvider(out Providers? validatedProvider, string? provider = null) { 
         Configuration? config = null;
-        validatedProvider = null;
         if(string.IsNullOrWhiteSpace(provider)) {
             if(!GetConfigPath(out var dir, out var path))
                 throw new DirectoryNotFoundException("Could not find configuration path - Configuration file not read.");
 
             if((config = GetConfig(dir, path)) == null)
                 throw new InvalidOperationException("Config could not be read.");
+
+            provider = config.Provider;
         }
 
         if (!Enum.TryParse<Providers>(provider, true, out var foundProvider)) {
             var validProviders = string.Join(Environment.NewLine, Enum.GetNames<Providers>().Select(p => $"| > {p}"));
-            string errorString = $"| Invalid provider - run \"ask --config --set-provider <provider>\" to set your provider.\n" + $"| Valid providers include:\n{validProviders}";
+            string errorString = $"Invalid provider - run \"ask --config --set-provider <provider>\" to set your provider.\n" + $"| Valid providers include:\n{validProviders}";
             throw new InvalidProviderException(errorString);
         } 
 

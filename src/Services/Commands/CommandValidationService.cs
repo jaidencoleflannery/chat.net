@@ -1,6 +1,4 @@
-using System.Text;
 using chat.net.Models;
-using chat.net.Configurations;
 
 using static chat.net.Configurations.ConfigurationService;
 
@@ -14,17 +12,18 @@ public static class CommandValidationService {
     /// <param name="commands">An array of strings representing the command, typically the user's input.</param>
     /// <returns>A Command type object that represents the input.</returns>
     
-    public static Command ValidateCommands(string[] commands) {
+    public static Command? ValidateCommands(string[] commands) {
+
         if(commands.Length <= 0 || string.IsNullOrWhiteSpace(commands[0]))
             throw new ArgumentException($"Arguments expected but no arguments were provided. \nUse -help for a list of commands.", nameof(commands));
-
+ 
         // this will be Input (normal chat) if the command is not found
         CommandAction commandType = GetCommandType(commands[0]); 
 
         // call routine for the type of command
-        Command? command = null;
+        Command command = null!;
         switch (commandType) {
-            // if it is a config, it needs atleast 1 argument
+            // if it is a config, it needs at least 1 argument
             case CommandAction.Config:
                 if(commands.Length < 2)
                     throw new ArgumentException("Argument expected for --config.");

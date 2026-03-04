@@ -3,10 +3,14 @@ using chat.net.Commands;
 using chat.net.Conversations;
 using chat.net.Configurations;
 
+using static chat.net.Commands.CommandValidationService;
+using static chat.net.Configurations.ConfigurationService;
+
+
 namespace Program;
 
 /// <summary>
-/// Provides an engine for running CLI commands to chat with AI in a scoped lifetime.
+/// Provides an engine wrapper for running CLI commands to chat with AI in a scoped lifetime.
 /// </summary>
 
 public class Program {
@@ -15,25 +19,29 @@ public class Program {
             // verify that the configuration file is good to go
             ConfigurationService.Init();
 
-            // setup special flag for debugging
+            // setup special flag for debugging (this is verified here so that other wrappers can have their own debug handler)
             string[] arguments;
             if(args[0] == "-debug")
                 arguments = args[1..];
             else
                 arguments = args;
 
-            Providers? provider = null; 
-            if(!(arguments.Length > 1) || CommandValidationService.FormatCommand(arguments[0]) != CommandAction.Config.ToString().ToLower() 
-            || CommandValidationService.FormatCommand(arguments[1]) != ConfigActionRequiresArgument.SetProvider.ToString().ToLower()) 
-                ConfigurationService.ValidateProvider(out provider);
-
-            // validate the input command
-            Command? command = CommandValidationService.ValidateCommands(arguments); 
+            // validate user is either setting the provider, or config provider is valid (we do this here so the wrapper can share provider between calls)            
+            // provider will never actually be null since ValidateProvider throws
+            Providers? provider = null;
+            if(args.Length <= 1 || !FormatCommand(args[0])!.Equals(CommandAction.Config.ToString(), StringComparison.OrdinalIgnoreCase) 
+            || !FormatCommand(args[1])!.Equals(ConfigActionRequiresArgument.SetProvider.ToString(), StringComparison.OrdinalIgnoreCase)) 
+                ValidateProvider(out provider);
+            else
+                ValidateProvider(out provider, args[2]);
+ 
+            // validate the input command and grab the current provider
+            Command? command = ValidateCommands(arguments);
             if(command == null)
-                throw new InvalidOperationException("Unexpected error validating command."); 
+                throw new InvalidOperationException("Unexpected error parsing command.");
 
-            // if null, new conversation 
-            var previousResponseId = ConfigurationService.GetValue(Configuration.ConfigurationAttributes.PreviousResponseId, provider);
+            // if previousResponseId is null => new conversation (this is handled here so that other wrappers can cache the value)
+            var previousResponseId = GetValue(Configuration.ConfigurationAttributes.PreviousResponseId, provider);
 
             // execute the command
             ResponseDto result = await CommandService.Execute(command, previousResponseId, provider); 
@@ -41,14 +49,8 @@ public class Program {
             // push response to user
             ResponseService.PrintResult(result);
 
-        } catch (Exception exception) {
-            if(exception is ProviderNotSetException providerNotSetException)
-                Console.WriteLine("Provider has to be set before this command can be executed."); 
-            if(exception is InvalidProviderException invalidProviderException)
-                ResponseService.PrintResult(new ResultResponseDto(false, invalidProviderException.Message));
-            if(args[0] == "-debug")
-                Console.WriteLine(exception);
-            return 1;
+        } catch (Exception exception) {  
+            ResponseService.HandleException(exception, args[0] == "-debug");
         }
 
         return 0;

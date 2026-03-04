@@ -2,6 +2,7 @@ using chat.net.Conversations;
 using chat.net.Configurations;
 using chat.net.Models;
 
+using static chat.net.Conversations.ResponseBuilder;
 using static chat.net.Models.ConfigActionRequiresArgument;
 using static chat.net.Models.ConfigAction;
 
@@ -27,7 +28,8 @@ public static class CommandService {
         if(command.Action != null)
             switch(command.Action) { 
                 case ClearConfig:
-                    return new ResponseDto(ConfigurationService.ClearConfig());
+                    ConfigurationService.ClearConfig();
+                    return new ResultResponseDto(true, "Successfully cleared configuration.");
                 default:
                     throw new ArgumentException($"Configuration action {command.Action} not recognized.", nameof(command.Action));
             }
@@ -37,7 +39,8 @@ public static class CommandService {
                 case SetProvider: 
                 case SetKey:
                 case SetInstructions:
-                    return new ResponseDto(ConfigurationService.SetValue(command));
+                    ConfigurationService.SetValue(command, provider);
+                    return new ResultResponseDto(true, "Successfully updated configuration.");
                 default:
                     throw new ArgumentException($"Configuration action with argument {command.ActionArgument} not recognized.", nameof(command.ActionArgument));
             }
@@ -48,16 +51,16 @@ public static class CommandService {
     public static async Task<ResponseDto> ExecuteInputCommand(InputCommand command, string? previousResponseId, Providers? provider) =>
         await ConversationService.Call(command.Text, previousResponseId);
 
-    public static Task<ResponseDto> ExecuteClearCommand(Command command, string? previousResponseId, Providers? provider) =>
-        Task.FromResult(
-            new ResponseDto(ConfigurationService.SetValue(
-                new ConfigCommand() {
-                     ActionArgument = SetPreviousResponseId, 
-                     Value = "empty" 
-                }
-            ))
-        );
+    public static Task<ResponseDto> ExecuteClearCommand(Command command, string? previousResponseId, Providers? provider) {
+        ConfigurationService.SetValue(
+            new ConfigCommand() {
+                ActionArgument = SetPreviousResponseId, 
+                Value = string.Empty 
+            });
+        return Task.FromResult((ResponseDto)new ResultResponseDto(true, "Conversation cleared."));
+    }
 
-    public static Task<ResponseDto> ExecuteHelpCommand(Command command, string? previousResponseId, Providers? provider) =>
-        Task.FromResult(new ResponseDto(ResponseService.PrintHelp()));
+    public static Task<ResponseDto> ExecuteHelpCommand(Command command, string? previousResponseId, Providers? provider) {
+        return Task.FromResult((ResponseDto)new ResultResponseDto(true, BuildHelp().ToString()));
+    }
 }
