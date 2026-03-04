@@ -19,7 +19,7 @@ public static class ConfigurationService {
         if(!GetConfigPath(out var dir, out var path))
             throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
         
-        // this is enefficient, but our configuration is relatively tiny
+        // this is inefficient, but our configuration is relatively tiny
         // if the configuration grows, replace this with a more efficient implementation
         var config = GetConfig(dir, path); 
         if(config == null)
@@ -33,17 +33,19 @@ public static class ConfigurationService {
         
         string response = "";
         Dictionary<Providers, string> dict;
-        if(property.GetType() == typeof(Dictionary<Providers, string>)) { 
+        if(property.PropertyType == typeof(Dictionary<Providers, string>)) { 
             if(provider == null)
                 throw new ArgumentNullException(nameof(provider));
 
-            var value = property.GetValue(config);
+            var value = property.GetValue(config) ?? new Dictionary<Providers, string>();
             if(value == null)
                 throw new InvalidOperationException($"Value of {property.Name} was null.");
             dict = (Dictionary<Providers, string>)value; 
             if(dict == null)
                 throw new InvalidOperationException($"Could not convert type of {nameof(value)} from {nameof(property)} to Dictionary.");
-            response = (dict[provider.Value] ?? "") as string;
+            response = dict.TryGetValue(provider.Value, out var res) 
+                ? res 
+                : "";
         } else {
             response = ((property.GetValue(config) ?? "") as string)!;
             if(response == null)

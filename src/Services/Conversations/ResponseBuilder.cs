@@ -1,10 +1,21 @@
 using System.Text;
 using chat.net.Models;
+using Microsoft.VisualBasic;
 
 namespace chat.net.Conversations;
 
 public class ResponseBuilder {
     const int ResponseWidth = 60;
+
+    public static StringBuilder BuildResponse(StringBuilder builder) {
+        var message = builder.ToString().Trim();
+        StringBuilder response = new();
+        response.AppendLine("*-RESPONSE-----------------------------------------------------*");
+        response.AppendLine($"> {message}");
+
+        return response;
+    }
+
     public static StringBuilder BuildException(Exception exception, bool debug) {
         StringBuilder response = new();
         // handle user error case
@@ -19,7 +30,7 @@ public class ResponseBuilder {
             var message = exception.Message;
             if(message.Length > ResponseWidth)
                 while(message.Length > ResponseWidth) {
-                    response.AppendLine($"| {message.AsSpan(0, ResponseWidth)} |");
+                    response.AppendLine($"| {message.AsSpan(0, ResponseWidth)}");
                     message = message.Substring(ResponseWidth);
                 }
             response.AppendLine("*--------------------------------------------------------------*");
@@ -28,7 +39,7 @@ public class ResponseBuilder {
     }
     public static StringBuilder BuildHelp() {
         StringBuilder response = new();
-        response.AppendLine("*-HELP-------------------*");
+        response.AppendLine("*-HELP---------------------------------------------------------*");
         response.AppendLine("| Expected usage:\n> ask \"<text>\"\n> ask {command}");
         response.AppendLine("| Potential Commands:");
         var commandOptions = (CommandAction[])Enum.GetValues(typeof(CommandAction)); // getvalues returns the base class Array, so we have to cast to an actual array
@@ -49,6 +60,7 @@ public class ResponseBuilder {
                     }
                 }
         }
+        response.AppendLine("*--------------------------------------------------------------*");
         return response;
     }
 }

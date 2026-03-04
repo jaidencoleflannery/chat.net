@@ -49,7 +49,7 @@ public static class CommandService {
         }
 
     public static async Task<ResponseDto> ExecuteInputCommand(InputCommand command, string? previousResponseId, Providers? provider) =>
-        await ConversationService.Call(command.Text, previousResponseId);
+        await ConversationService.Call(command.Text, previousResponseId, provider);
 
     public static Task<ResponseDto> ExecuteClearCommand(Command command, string? previousResponseId, Providers? provider) {
         ConfigurationService.SetValue(

@@ -9,7 +9,7 @@ namespace chat.net.Conversations;
 
 public static class ResponseService {
     public static void PrintResult(ResponseDto result) =>
-        PrintToConsole(ParseResponse(result));
+        PrintToConsole(BuildResponse(ParseResponse(result)));
 
     public static void HandleException(Exception exception, bool debug) =>
         PrintToConsole(BuildException(exception, debug));

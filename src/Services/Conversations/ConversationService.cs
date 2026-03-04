@@ -18,26 +18,25 @@ public static class ConversationService {
         [Providers.Deepseek] = (input, model, previousResponseId, instructions, key) => DeepseekCall(input, model, previousResponseId, instructions, key),
     };
 
-    public static async Task<ResponseDto> Call(string input, string? previousResponseId) { 
-        var providerString = ConfigurationService.GetValue(Provider)!;
-        if(string.IsNullOrWhiteSpace(providerString))
-            throw new InvalidOperationException("Could not pull value for provider from config.");
-        if(!Enum.TryParse<Providers>(providerString, true, out var provider))
-            throw new InvalidOperationException("Could not verify provider value pulled from config.");
+    public static async Task<ResponseDto> Call(string input, string? previousResponseId, Providers? provider) { 
+        if(provider == null)
+            throw new ArgumentNullException(nameof(provider));
+        if(!map.ContainsKey(provider.Value))
+            throw new InvalidOperationException("Provided provider is not configured.");
 
-        var model = ConfigurationService.GetValue(Model)!;
+        var model = ConfigurationService.GetValue(Model, provider.Value)!;
         if(model == null)
             throw new InvalidOperationException("Could not pull value for model from config.");
 
-        var key = ConfigurationService.GetValue(Key);
+        var key = ConfigurationService.GetValue(Key, provider.Value);
         if(key == null)
             throw new InvalidOperationException("Failed to get key from config. Set your API key for your desired model with 'ask --config --set-key <key>'");  
 
-        var instructions = ConfigurationService.GetValue(Instructions);
+        var instructions = ConfigurationService.GetValue(Instructions, provider.Value);
         if(instructions == null)
             throw new InvalidOperationException("Failed to get instructions from config.");
 
-        return await map[provider](input, model, previousResponseId, instructions, key);
+        return await map[provider.Value](input, model, previousResponseId, instructions, key);
     }
 
     public static async Task<ResponseDto> OpenAiCall(string input, string model, string? previousResponseId, string instructions, string key) {
@@ -46,7 +45,7 @@ public static class ConversationService {
 
         string? conversationId = null;
 
-        if(!(string.IsNullOrWhiteSpace(previousResponseId) || previousResponseId == "empty"))
+        if(!(string.IsNullOrWhiteSpace(previousResponseId)))
             conversationId = previousResponseId;
 
         var json = JsonSerializer.Serialize(new {
