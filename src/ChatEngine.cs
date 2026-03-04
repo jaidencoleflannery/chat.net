@@ -16,6 +16,8 @@ namespace Program;
 public class Program {
     static async Task<int> Main(string[] args) {
         try {
+            if(args.Length < 1 || string.IsNullOrWhiteSpace(args[0]))
+                throw new ArgumentException($"Arguments expected but no arguments were provided. \nUse -help for a list of commands.", nameof(args));
             // verify that the configuration file is good to go
             ConfigurationService.Init();
 
@@ -50,7 +52,7 @@ public class Program {
             ResponseService.PrintResult(result);
 
         } catch (Exception exception) {  
-            ResponseService.HandleException(exception, args[0] == "-debug");
+            ResponseService.HandleException(exception, (args.Length > 0) ? args[0] == "-debug" : false);
         }
 
         return 0;

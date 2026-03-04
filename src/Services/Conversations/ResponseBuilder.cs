@@ -7,11 +7,10 @@ namespace chat.net.Conversations;
 public class ResponseBuilder {
     const int ResponseWidth = 60;
 
-    public static StringBuilder BuildResponse(StringBuilder builder) {
+    public static StringBuilder BuildChatResponse(StringBuilder builder) {
         var message = builder.ToString().Trim();
         StringBuilder response = new();
-        response.AppendLine("*-RESPONSE-----------------------------------------------------*");
-        response.AppendLine($"> {message}");
+        response.AppendLine($"{message}");
 
         return response;
     }
@@ -28,11 +27,8 @@ public class ResponseBuilder {
         if(debug) {
             response.AppendLine("*-LOGGER-------------------------------------------------------*");
             var message = exception.Message;
-            if(message.Length > ResponseWidth)
-                while(message.Length > ResponseWidth) {
-                    response.AppendLine($"| {message.AsSpan(0, ResponseWidth)}");
-                    message = message.Substring(ResponseWidth);
-                }
+            foreach(var line in message.Split("\n"))
+                response.AppendLine($"| {line}");
             response.AppendLine("*--------------------------------------------------------------*");
         }
         return response;
