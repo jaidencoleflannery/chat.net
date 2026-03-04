@@ -58,7 +58,7 @@ public static class CommandValidationService {
         var input = FormatCommand(command); 
 
         // if command is in commandactions, return that, else it is input for the chat
-        return (Enum.TryParse<CommandAction>(input, true, out var action)) 
+        return Enum.TryParse<CommandAction>(input, true, out var action) 
             ? action
             : CommandAction.Input;
     }

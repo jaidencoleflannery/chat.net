@@ -72,9 +72,9 @@ public static class ConfigurationService {
     }
 
     public static void SetValue(ConfigCommand command, Providers? provider = null) { 
-        if (command == null || string.IsNullOrWhiteSpace(command.Value) || command.ActionArgument == null)
+        if (command == null || command.ActionArgument == null)
             throw new ArgumentException($"{nameof(command)} invalid.", nameof(command));
-
+        
         if(!GetConfigPath(out var dir, out var path))
             throw new DirectoryNotFoundException("Could not find or create configuration path - Configuration file not written");
 

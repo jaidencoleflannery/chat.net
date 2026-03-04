@@ -68,6 +68,7 @@ public static class ConversationService {
             throw new InvalidOperationException($"Body could not be parsed from response. {body?.ToString()}"); 
 
         body.Provider = Providers.Openai; 
+        StoreResponseId(body.Id, body.Provider);
 
         return body; 
     }
@@ -103,9 +104,11 @@ public static class ConversationService {
 
         var id = body.Id;
         ConfigCommand configConversationUpdate = new() { ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, Value = id };
-        ConfigurationService.SetValue(configConversationUpdate);
+        ConfigurationService.SetValue(configConversationUpdate, Providers.Anthropic);
 
         body.Provider = Providers.Anthropic;
+        StoreResponseId(body.Id, body.Provider);
+
         return body;    
     }
     
@@ -157,4 +160,7 @@ public static class ConversationService {
 
         return response;
     }
+
+    public static void StoreResponseId(string Id, Providers provider) =>
+        ConfigurationService.SetValue(new ConfigCommand() { ActionArgument = ConfigActionRequiresArgument.SetPreviousResponseId, Value = Id }, provider);
 }

@@ -55,8 +55,10 @@ public static class CommandService {
         ConfigurationService.SetValue(
             new ConfigCommand() {
                 ActionArgument = SetPreviousResponseId, 
-                Value = string.Empty 
-            });
+                Value = string.Empty
+            }, 
+            provider
+        );
         return Task.FromResult((ResponseDto)new ResultResponseDto(true, "Conversation cleared."));
     }
 
