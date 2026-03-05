@@ -77,12 +77,14 @@ public static class CommandValidationService {
         // if(enum requires no arguments) else if(it does require arguments) else throw
         if(Enum.TryParse<ConfigAction>(configCommand, true, out var action)) {
             return new ConfigCommand(action);
-        } else if(Enum.TryParse<ConfigActionRequiresArgument>(configCommand, true, out var actionWithArgument)) {
+        } else if(Enum.TryParse<ConfigActionRequiresArgument>(configCommand, true, out var actionWithArgument) ) {
+            if(typeof(ConfigActionRequiresArgument).GetField(actionWithArgument.ToString())!.IsDefined(typeof(PrivateArgument), false))
+                throw new ArgumentException($"Argument {actionWithArgument} is a private argument and cannot be set through commands.", nameof(commands));
             if(commands.Length < 3)
                 throw new ArgumentException($"--config {configCommand} expects an argument but no argument was provided.", nameof(commands));
             if(string.IsNullOrWhiteSpace(commands[2]))
                 throw new ArgumentException("Provided argument is null or empty", nameof(commands));
-             
+            
             var arg = commands[2]; 
             switch (actionWithArgument) {
                 // provider has to match a value from Providers enum 

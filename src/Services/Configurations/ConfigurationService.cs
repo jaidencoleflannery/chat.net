@@ -174,7 +174,7 @@ public static class ConfigurationService {
 
         if (!Enum.TryParse<Providers>(provider, true, out var foundProvider)) {
             var validProviders = string.Join(Environment.NewLine, Enum.GetNames<Providers>().Select(p => $"| > {p}"));
-            string errorString = $"Invalid provider - run \"ask --config --set-provider <provider>\" to set your provider.\n" + $"| Valid providers include:\n{validProviders}";
+            string errorString = $"Invalid provider - run \"ask --config -set-provider <provider>\" to set your provider.\n" + $"| Valid providers include:\n{validProviders}";
             throw new InvalidProviderException(errorString);
         } 
 

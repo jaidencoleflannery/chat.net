@@ -12,10 +12,14 @@ public enum ConfigAction {
 }
 
 public enum ConfigActionRequiresArgument {
+
     SetModel,
     SetProvider,
     SetKey,
-    SetPreviousResponseId,
     SetInstructions,
+    
+    [PrivateArgument]
+    SetPreviousResponseId, 
+    [PrivateArgument]
     SetMessageHistory
 }

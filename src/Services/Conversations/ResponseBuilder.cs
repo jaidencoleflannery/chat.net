@@ -36,27 +36,30 @@ public class ResponseBuilder {
     public static StringBuilder BuildHelp() {
         StringBuilder response = new();
         response.AppendLine("*-HELP---------------------------------------------------------*");
-        response.AppendLine("| Expected usage:\n> ask \"<text>\"\n> ask {command}");
-        response.AppendLine("| Potential Commands:");
+        response.AppendLine("|\n|    Expected usage:\n|    > ask \"<text>\"\n|    > ask <command>");
+        response.AppendLine("|      > Potential Commands:");
         var commandOptions = (CommandAction[])Enum.GetValues(typeof(CommandAction)); // getvalues returns the base class Array, so we have to cast to an actual array
         for(int command = 0; command < commandOptions.Length; command++) {
-            if(commandOptions[command] != CommandAction.Input)
+            if(!typeof(CommandAction).GetField(commandOptions[command].ToString())!.IsDefined(typeof(PrivateArgument), false))
                 if(commandOptions[command] != CommandAction.Config) {
-                    response.Append($"| {commandOptions[command]}");
+                    response.AppendLine($"|          > -{commandOptions[command]}");
                 } else {
-                    response.Append($"| {commandOptions[command]} <argument>");
+                    response.AppendLine($"|          > --{commandOptions[command]} <argument>");
                     var configOptions = (ConfigAction[])Enum.GetValues(typeof(ConfigAction));
-                    response.Append("| Potential Arguments (no input required):");
+                    response.AppendLine("|              > Potential Arguments (no input required):");
                     for(int argument = 0; argument < configOptions.Length; argument++) {
-                        response.Append($"| {configOptions[argument]}");
+                        if(!typeof(ConfigAction).GetField(configOptions[argument].ToString())!.IsDefined(typeof(PrivateArgument), false))
+                            response.AppendLine($"|                  > -{configOptions[argument]}");
                     }
-                    response.Append("| Potential Arguments (input required):");
-                    for(int argument = 0; argument < configOptions.Length; argument++) {
-                        response.Append($"| {configOptions[argument]} <input>");
+                    var configArgumentOptions = (ConfigActionRequiresArgument[])Enum.GetValues(typeof(ConfigActionRequiresArgument));
+                    response.AppendLine("|              > Potential Arguments (input required):");
+                    for(int argument = 0; argument < configArgumentOptions.Length; argument++) {
+                        if(!typeof(ConfigActionRequiresArgument).GetField(configArgumentOptions[argument].ToString())!.IsDefined(typeof(PrivateArgument), false))
+                            response.AppendLine($"|                  > -{configArgumentOptions[argument]} <input>");
                     }
                 }
         }
-        response.AppendLine("*--------------------------------------------------------------*");
+        response.AppendLine("|\n*--------------------------------------------------------------*");
         return response;
     }
 }
