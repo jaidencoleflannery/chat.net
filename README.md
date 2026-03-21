@@ -1,2 +1,4 @@
-# **currently in development**
-(note, all functionality is currently implemented for openai - all other providers will be implemented before first release version)
+# chat.net
+a cli tool for communicating with ai without the overhead of indexing and file parsing.
+
+> **status:** in development.
